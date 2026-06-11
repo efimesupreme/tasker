@@ -1909,3 +1909,698 @@ summary:focus-visible {
     height: 22px;
   }
 }
+
+/* Compact density pass: tighter spacing, controls, and mobile task layout */
+:root {
+  --radius-lg: 18px;
+  --radius-md: 13px;
+  --radius-sm: 10px;
+  --shadow: 0 16px 44px rgba(0, 0, 0, 0.34);
+}
+
+.topbar {
+  gap: 14px;
+  padding: 10px 20px;
+}
+
+.topbar__brand {
+  gap: 10px;
+}
+
+.brand-mark {
+  flex-basis: 40px;
+  width: 40px;
+  height: 40px;
+  border-radius: 12px;
+  font-size: 0.9rem;
+}
+
+.eyebrow {
+  margin-bottom: 4px;
+  font-size: 0.7rem;
+}
+
+h1 {
+  font-size: 1.02rem;
+}
+
+.menu {
+  gap: 6px;
+}
+
+.project-tabs {
+  padding: 2px 2px 5px;
+}
+
+.menu__item {
+  min-height: 34px;
+  max-width: 190px;
+  gap: 8px;
+  padding: 0 11px;
+  font-size: 0.9rem;
+}
+
+.project-tabs__settings {
+  width: 34px;
+  font-size: 0.96rem;
+}
+
+.main-content {
+  padding: 26px 30px;
+}
+
+.page-header,
+.toolbar,
+.section-heading {
+  gap: 12px;
+}
+
+.page-header {
+  margin-bottom: 16px;
+}
+
+.page-header h2 {
+  font-size: clamp(1.65rem, 3.2vw, 2.7rem);
+}
+
+.primary-button,
+.ghost-button {
+  min-height: 38px;
+  padding-inline: 16px;
+  border-radius: 14px;
+}
+
+.toolbar {
+  margin-bottom: 18px;
+  padding: 10px;
+  border-radius: var(--radius-lg);
+}
+
+.search {
+  gap: 8px;
+  padding: 0 12px;
+}
+
+.search input {
+  min-height: 38px;
+}
+
+.widgets {
+  gap: 14px;
+  margin-bottom: 18px;
+}
+
+.widget {
+  min-height: 132px;
+  padding: 15px;
+}
+
+.widget__topline {
+  height: 3px;
+  margin-bottom: 14px;
+}
+
+.widget__label,
+.widget__value {
+  margin-bottom: 8px;
+}
+
+.widget__value {
+  font-size: 1.65rem;
+}
+
+.widget__hint {
+  font-size: 0.84rem;
+  line-height: 1.38;
+}
+
+.project-board {
+  padding: 18px;
+}
+
+.section-heading {
+  margin-bottom: 12px;
+}
+
+.section-heading h3 {
+  font-size: 1.22rem;
+}
+
+.section-heading__note {
+  font-size: 0.82rem;
+}
+
+.project-grid {
+  gap: 12px;
+}
+
+.project-card {
+  min-height: 220px;
+  padding: 14px;
+}
+
+.project-card__header {
+  gap: 9px;
+  margin-bottom: 12px;
+}
+
+.project-card__status {
+  min-height: 24px;
+  padding: 4px 8px;
+  font-size: 0.7rem;
+}
+
+.project-card__title,
+.project-card h4 {
+  margin-bottom: 7px;
+  font-size: 0.98rem;
+}
+
+.project-card p,
+.project-card__description {
+  margin-bottom: 12px;
+  line-height: 1.42;
+}
+
+.project-card__progress,
+.project-map__progress,
+.task-group__progress {
+  min-height: 8px;
+  height: 8px;
+}
+
+.project-card__progress {
+  margin-bottom: 12px;
+}
+
+.project-card__details {
+  gap: 8px;
+}
+
+.project-card__details dt,
+.project-card__term,
+.project-map__meta dt,
+.project-map__progress-card span,
+.next-action-card__meta dt,
+.stalled-card__meta dt {
+  font-size: 0.68rem;
+}
+
+.project-card__details dd,
+.project-card__definition {
+  font-size: 0.84rem;
+  line-height: 1.35;
+}
+
+.quick-links {
+  gap: 10px;
+  margin-bottom: 18px;
+}
+
+.quick-link-card {
+  min-height: 88px;
+  gap: 5px;
+  padding: 14px;
+}
+
+.quick-link-card strong {
+  font-size: 1rem;
+}
+
+.dashboard-layout {
+  gap: 18px;
+}
+
+.next-actions-panel {
+  padding: 16px;
+}
+
+.project-workspace__hero {
+  gap: 14px;
+  margin-bottom: 12px;
+  padding: 17px;
+}
+
+.project-workspace__main {
+  gap: 9px;
+}
+
+.project-workspace__title-row,
+.project-workspace__progress-line,
+.task-group__header,
+.task-group__header-actions {
+  gap: 10px;
+}
+
+.project-workspace__title-row h2 {
+  font-size: clamp(1.55rem, 3.4vw, 2.45rem);
+}
+
+.project-workspace__description,
+.project-workspace__completion {
+  line-height: 1.38;
+}
+
+.project-workspace__progress-line strong {
+  font-size: 1.28rem;
+}
+
+.project-workspace__actions,
+.project-workspace__groups,
+.task-groups {
+  gap: 10px;
+}
+
+.project-workspace__quick-links {
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.task-group--card {
+  gap: 10px;
+  padding: 14px;
+}
+
+.task-group summary {
+  gap: 12px;
+  padding: 14px 16px;
+}
+
+.task-group__heading {
+  gap: 3px;
+}
+
+.task-group__title {
+  line-height: 1.25;
+}
+
+.task-group__stats {
+  font-size: 0.78rem;
+}
+
+.task-list {
+  gap: 8px;
+  padding: 0 16px 16px;
+}
+
+.task-item {
+  gap: 8px;
+  padding: 11px;
+}
+
+.task-item__main {
+  gap: 10px;
+}
+
+.task-item__main input {
+  width: 17px;
+  height: 17px;
+  margin-top: 2px;
+}
+
+.task-item__main span {
+  gap: 2px;
+}
+
+.task-item__main strong {
+  line-height: 1.25;
+}
+
+.task-item__main small,
+.task-item p,
+.task-item__depends {
+  font-size: 0.82rem;
+  line-height: 1.32;
+}
+
+.task-item p,
+.task-item__depends,
+.entity-actions--task {
+  margin-left: 27px;
+}
+
+.entity-actions {
+  gap: 6px;
+}
+
+.entity-actions--card {
+  margin-top: 10px;
+}
+
+.mini-button,
+.add-task-button {
+  min-height: 30px;
+  padding: 0 10px;
+  border-radius: 12px;
+  font-size: 0.76rem;
+}
+
+.done-button {
+  min-height: 34px;
+  border-radius: 12px;
+}
+
+.next-actions-preview,
+.next-actions-list {
+  gap: 9px;
+}
+
+.next-action-card,
+.stalled-card {
+  gap: 12px;
+  padding: 14px;
+}
+
+.next-action-card--compact {
+  gap: 9px;
+  padding: 12px;
+}
+
+.next-action-card__main h3,
+.stalled-card__main h3 {
+  font-size: 1rem;
+}
+
+.next-action-card__meta,
+.stalled-card__meta {
+  gap: 8px;
+}
+
+.next-action-card__meta div,
+.stalled-card__meta div {
+  padding: 8px;
+}
+
+.stalled-intro {
+  gap: 12px;
+  margin-bottom: 18px;
+  padding: 14px 16px;
+}
+
+.stalled-layout {
+  gap: 18px;
+}
+
+.empty-section {
+  padding: 16px;
+}
+
+@media (max-width: 780px) {
+  .topbar {
+    gap: 7px;
+    padding: 7px 12px 5px;
+  }
+
+  .topbar__brand {
+    gap: 8px;
+  }
+
+  .brand-mark {
+    flex-basis: 32px;
+    width: 32px;
+    height: 32px;
+    border-radius: 10px;
+    font-size: 0.78rem;
+  }
+
+  .topbar__brand h1 {
+    font-size: 0.92rem;
+  }
+
+  .project-tabs {
+    margin: 0 -12px;
+    padding: 0 12px 4px;
+  }
+
+  .menu {
+    gap: 5px;
+  }
+
+  .menu__item {
+    min-height: 32px;
+    max-width: 150px;
+    padding: 0 9px;
+    font-size: 0.82rem;
+  }
+
+  .project-tabs__settings {
+    width: 32px;
+  }
+
+  .main-content {
+    padding: 14px 12px 20px;
+  }
+
+  .page-header,
+  .toolbar,
+  .section-heading,
+  .stalled-intro {
+    gap: 8px;
+  }
+
+  .page-header h2 {
+    font-size: clamp(1.55rem, 7vw, 2rem);
+  }
+
+  .toolbar {
+    margin-bottom: 12px;
+    padding: 9px;
+    border-radius: 15px;
+  }
+
+  .primary-button,
+  .ghost-button,
+  .mini-button,
+  .add-task-button,
+  .done-button {
+    min-height: 38px;
+    padding-inline: 12px;
+  }
+
+  .search input {
+    min-height: 38px;
+  }
+
+  .widgets {
+    gap: 10px;
+    margin-bottom: 12px;
+  }
+
+  .widget {
+    min-height: 112px;
+    padding: 12px;
+  }
+
+  .project-board,
+  .next-actions-panel {
+    padding: 12px;
+  }
+
+  .section-heading {
+    margin-bottom: 9px;
+  }
+
+  .section-heading h3 {
+    font-size: 1.08rem;
+  }
+
+  .quick-link-card {
+    min-height: 76px;
+    padding: 11px;
+  }
+
+  .project-card {
+    padding: 12px;
+  }
+
+  .project-card__header {
+    margin-bottom: 9px;
+  }
+
+  .project-workspace__hero {
+    gap: 10px;
+    margin-bottom: 10px;
+    padding: 12px;
+  }
+
+  .project-workspace__title-row h2 {
+    font-size: clamp(1.35rem, 7vw, 1.8rem);
+    line-height: 1.08;
+  }
+
+  .project-workspace__progress-line strong {
+    font-size: 1.12rem;
+  }
+
+  .project-workspace__quick-links,
+  .project-workspace__groups {
+    gap: 8px;
+  }
+
+  .task-group--card {
+    gap: 8px;
+    padding: 11px;
+  }
+
+  .task-group__header,
+  .task-group__header-actions {
+    gap: 8px;
+  }
+
+  .task-group__actions {
+    gap: 6px;
+  }
+
+  .task-group__progress {
+    margin: 0;
+  }
+
+  .task-list {
+    gap: 7px;
+    padding: 0;
+  }
+
+  .task-item {
+    gap: 6px;
+    padding: 9px;
+  }
+
+  .task-item__main {
+    min-height: 34px;
+    gap: 9px;
+    align-items: flex-start;
+  }
+
+  .task-item__main input {
+    width: 20px;
+    height: 20px;
+    margin-top: 0;
+  }
+
+  .task-item p,
+  .task-item__depends,
+  .entity-actions--task {
+    margin-left: 29px;
+  }
+
+  .task-item__main small,
+  .task-item p,
+  .task-item__depends {
+    font-size: 0.78rem;
+  }
+
+  .entity-actions--task {
+    align-items: flex-start;
+    flex-direction: row;
+    flex-wrap: wrap;
+  }
+
+  .project-workspace__quick-links .mini-button,
+  .task-group__actions .mini-button,
+  .task-group__actions .add-task-button,
+  .entity-actions--task .mini-button {
+    min-height: 36px;
+  }
+
+  .next-action-card,
+  .stalled-card {
+    gap: 9px;
+    padding: 11px;
+  }
+
+  .empty-section {
+    padding: 12px;
+  }
+}
+
+@media (max-width: 520px) {
+  .main-content {
+    padding-inline: 10px;
+  }
+
+  .project-board,
+  .next-actions-panel,
+  .widget,
+  .stalled-intro {
+    border-radius: 14px;
+  }
+
+  .entity-actions,
+  .task-group__actions,
+  .stalled-card__actions {
+    display: flex;
+    flex-wrap: wrap;
+  }
+
+  .entity-actions--card {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .mini-button,
+  .add-task-button {
+    width: auto;
+  }
+
+  .task-group__actions .add-task-button {
+    flex: 1 1 130px;
+  }
+
+  .task-group__actions .mini-button,
+  .entity-actions--task .mini-button,
+  .stalled-card__actions .mini-button {
+    flex: 1 1 112px;
+  }
+}
+
+@media (max-width: 400px) {
+  .topbar {
+    padding-inline: 10px;
+  }
+
+  .project-tabs {
+    margin-inline: -10px;
+    padding-inline: 10px;
+  }
+
+  .main-content {
+    padding-inline: 8px;
+  }
+
+  .project-board,
+  .next-actions-panel,
+  .project-map__summary,
+  .project-map__progress-card,
+  .task-list,
+  .task-group summary,
+  .project-workspace__hero,
+  .task-group--card {
+    padding-inline: 10px;
+  }
+}
+
+@media (max-width: 780px) {
+  .primary-button,
+  .ghost-button {
+    width: auto;
+  }
+
+  .project-workspace__actions {
+    align-items: center;
+    flex-direction: row;
+    flex-wrap: wrap;
+  }
+
+  .project-workspace__actions .primary-button,
+  .project-workspace__actions .mini-button {
+    width: auto;
+    flex: 1 1 132px;
+  }
+}
+
+@media (max-width: 380px) {
+  .project-workspace__actions .primary-button,
+  .project-workspace__actions .mini-button {
+    flex-basis: 100%;
+  }
+}
