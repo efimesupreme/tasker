@@ -91,7 +91,7 @@
           <div class="widget__topline"></div>
           <p class="widget__label">Без движения 14+ дней</p>
           <strong class="widget__value" data-widget="stalled">—</strong>
-          <span class="widget__hint">Проекты, где последнее движение было две недели назад или раньше.</span>
+          <span class="widget__hint">Проекты, группы и подзадачи, где не было движения 14+ дней.</span>
         </article>
       </section>
 
@@ -153,8 +153,53 @@
       </section>
 
       <section class="app-section" id="stalled" data-section="stalled" hidden>
-        <header class="page-header"><div><p class="eyebrow">Скоро</p><h2>Зависшие</h2></div></header>
-        <section class="empty-section">Раздел будет подключён позже.</section>
+        <header class="page-header">
+          <div>
+            <p class="eyebrow">Ревизия</p>
+            <h2>Зависшие</h2>
+          </div>
+          <span class="page-header__counter page-header__counter--stalled" data-stalled-count>—</span>
+        </header>
+
+        <section class="stalled-intro" aria-label="Правила зависших элементов">
+          <p>Здесь собраны незавершённые проекты, группы задач и подзадачи без движения 14+ дней.</p>
+          <span>Замороженные, отменённые и завершённые элементы не попадают в список и не удаляются автоматически.</span>
+        </section>
+
+        <div class="stalled-layout">
+          <section class="project-board" aria-labelledby="stalled-projects-title">
+            <div class="section-heading">
+              <div>
+                <p class="eyebrow">Уровень проекта</p>
+                <h3 id="stalled-projects-title">Зависшие проекты</h3>
+              </div>
+              <span class="section-heading__note">Решите: двигать, заморозить или отменить</span>
+            </div>
+            <div class="stalled-list" id="stalled-projects-list"></div>
+          </section>
+
+          <section class="project-board" aria-labelledby="stalled-groups-title">
+            <div class="section-heading">
+              <div>
+                <p class="eyebrow">Уровень группы</p>
+                <h3 id="stalled-groups-title">Зависшие группы задач</h3>
+              </div>
+              <span class="section-heading__note">Группы внутри активных проектов</span>
+            </div>
+            <div class="stalled-list" id="stalled-groups-list"></div>
+          </section>
+
+          <section class="project-board" aria-labelledby="stalled-tasks-title">
+            <div class="section-heading">
+              <div>
+                <p class="eyebrow">Уровень подзадачи</p>
+                <h3 id="stalled-tasks-title">Зависшие подзадачи</h3>
+              </div>
+              <span class="section-heading__note">Ничего не удаляется без вашего решения</span>
+            </div>
+            <div class="stalled-list" id="stalled-tasks-list"></div>
+          </section>
+        </div>
       </section>
       <section class="app-section" id="archive" data-section="archive" hidden>
         <header class="page-header"><div><p class="eyebrow">Скоро</p><h2>Архив</h2></div></header>

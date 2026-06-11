@@ -14,6 +14,7 @@ const demoProjects = [
         status: 'active',
         weight: 4,
         progress: 50,
+        lastActivityDate: '2026-06-09',
         tasks: [
           {
             id: 'career-skills-map',
@@ -54,6 +55,7 @@ const demoProjects = [
         status: 'waiting',
         weight: 5,
         progress: 34,
+        lastActivityDate: '2026-05-20',
         tasks: [
           {
             id: 'renovation-electrician-estimate',
@@ -94,6 +96,7 @@ const demoProjects = [
         status: 'planned',
         weight: 3,
         progress: 25,
+        lastActivityDate: '2026-06-01',
         tasks: [
           {
             id: 'galaxy-characters',
@@ -123,6 +126,7 @@ const demoProjects = [
         status: 'active',
         weight: 5,
         progress: 20,
+        lastActivityDate: '2026-06-03',
         tasks: [
           {
             id: 'granicon-check-requirements',
@@ -213,6 +217,7 @@ const demoProjects = [
         status: 'frozen',
         weight: 4,
         progress: 9,
+        lastActivityDate: '2026-04-28',
         tasks: [
           {
             id: 'aurelia-hypotheses',
@@ -253,6 +258,7 @@ const demoProjects = [
         status: 'active',
         weight: 4,
         progress: 47,
+        lastActivityDate: '2026-06-10',
         tasks: [
           {
             id: 'book-fin-inbox',
@@ -281,6 +287,8 @@ const demoProjects = [
 ];
 
 const STORAGE_KEY = 'tasker.projects.v1';
+const STALLED_DAYS_THRESHOLD = 14;
+const NON_STALLED_STATUSES = ['done', 'cancelled', 'frozen'];
 
 let projects = loadProjects();
 let selectedProjectId = projects.some((project) => project.id === 'galaxy-heroes') ? 'galaxy-heroes' : projects[0]?.id || null;
@@ -319,18 +327,44 @@ function cloneProjects(projectList) {
   return JSON.parse(JSON.stringify(projectList));
 }
 
+function getLatestDate(...dateValues) {
+  return dateValues
+    .filter(Boolean)
+    .sort((first, second) => new Date(second) - new Date(first))[0] || getTodayIsoDate();
+}
+
+function normalizeProjects(projectList) {
+  return projectList.map((project) => {
+    project.groups = project.groups || [];
+    project.lastActivityDate = project.lastActivityDate || getTodayIsoDate();
+
+    project.groups.forEach((group) => {
+      group.tasks = group.tasks || [];
+      group.tasks.forEach((task) => {
+        task.lastActivityDate = task.lastActivityDate || project.lastActivityDate;
+      });
+      group.lastActivityDate = group.lastActivityDate || getLatestDate(
+        ...group.tasks.map((task) => task.lastActivityDate),
+        project.lastActivityDate
+      );
+    });
+
+    return project;
+  });
+}
+
 function loadProjects() {
   try {
     const savedProjects = JSON.parse(localStorage.getItem(STORAGE_KEY) || 'null');
 
     if (Array.isArray(savedProjects)) {
-      return savedProjects;
+      return normalizeProjects(savedProjects);
     }
   } catch (error) {
     console.warn('Не удалось прочитать сохранённые проекты, используются демо-данные.', error);
   }
 
-  return cloneProjects(demoProjects);
+  return normalizeProjects(cloneProjects(demoProjects));
 }
 
 function persistProjects() {
@@ -567,6 +601,47 @@ function getDaysSince(dateValue) {
   return Math.floor((now - lastActivity) / millisecondsInDay);
 }
 
+function hasNonStalledStatus(item) {
+  return NON_STALLED_STATUSES.includes(item.status);
+}
+
+function isStalledItem(item) {
+  return !hasNonStalledStatus(item)
+    && getDaysSince(item.lastActivityDate) >= STALLED_DAYS_THRESHOLD;
+}
+
+function getStalledItems(projects) {
+  return projects.flatMap((project) => {
+    const items = [];
+
+    if (isStalledItem(project)) {
+      items.push({ type: 'project', item: project, project });
+    }
+
+    if (hasNonStalledStatus(project)) {
+      return items;
+    }
+
+    (project.groups || []).forEach((group) => {
+      if (isStalledItem(group)) {
+        items.push({ type: 'group', item: group, project, group });
+      }
+
+      if (hasNonStalledStatus(group)) {
+        return;
+      }
+
+      (group.tasks || []).forEach((task) => {
+        if (isStalledItem(task)) {
+          items.push({ type: 'task', item: task, project, group, task });
+        }
+      });
+    });
+
+    return items;
+  }).sort((first, second) => getDaysSince(second.item.lastActivityDate) - getDaysSince(first.item.lastActivityDate));
+}
+
 function getProjectTasks(project) {
   return (project?.groups || []).flatMap((group) => group.tasks || []);
 }
@@ -767,8 +842,14 @@ function completeTask(taskId, projects) {
     return;
   }
 
+  const today = getTodayIsoDate();
+  const project = projects.find((item) => findTask(item, taskId));
+  const group = getTaskGroup(project, taskId);
+
   task.status = 'done';
-  task.lastActivityDate = getTodayIsoDate();
+  task.lastActivityDate = today;
+  if (group) group.lastActivityDate = today;
+  if (project) project.lastActivityDate = today;
   persistProjects();
   renderAll(projects);
 }
@@ -816,7 +897,8 @@ function saveGroup(form) {
   const data = {
     title,
     status: formData.get('status') || 'planned',
-    weight: Number(formData.get('weight')) || 1
+    weight: Number(formData.get('weight')) || 1,
+    lastActivityDate: getTodayIsoDate()
   };
 
   if (group) {
@@ -865,7 +947,9 @@ function saveTask(form) {
     });
   }
 
-  project.lastActivityDate = getTodayIsoDate();
+  const today = getTodayIsoDate();
+  group.lastActivityDate = today;
+  project.lastActivityDate = today;
 }
 
 function handleEntityFormSubmit(event) {
@@ -924,6 +1008,71 @@ function deleteTask(projectId, taskId) {
   renderAll(projects);
 }
 
+
+function getStalledItemContext(type, projectId, itemId) {
+  const project = findProject(projectId);
+
+  if (!project) return null;
+  if (type === 'project') return { type, project, item: project };
+
+  if (type === 'group') {
+    const group = findGroup(project, itemId);
+    return group ? { type, project, group, item: group } : null;
+  }
+
+  if (type === 'task') {
+    const task = findTask(project, itemId);
+    const group = getTaskGroup(project, itemId);
+    return task && group ? { type, project, group, task, item: task } : null;
+  }
+
+  return null;
+}
+
+function touchStalledParents(context, today) {
+  if (context.type !== 'project') {
+    context.project.lastActivityDate = today;
+  }
+
+  if (context.type === 'task' && context.group) {
+    context.group.lastActivityDate = today;
+  }
+}
+
+function openStalledItem(projectId) {
+  selectedProjectId = projectId;
+  window.location.hash = 'dashboard';
+  setActiveSection('dashboard');
+  renderProjectCards(projects);
+  renderSelectedProject(projects);
+  document.querySelector('#selected-project-details')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
+function updateStalledItem(type, projectId, itemId, updates) {
+  const context = getStalledItemContext(type, projectId, itemId);
+
+  if (!context) return;
+
+  const today = getTodayIsoDate();
+  Object.assign(context.item, updates);
+  context.item.lastActivityDate = today;
+  touchStalledParents(context, today);
+  persistProjects();
+  renderAll(projects);
+}
+
+function freezeStalledItem(type, projectId, itemId) {
+  updateStalledItem(type, projectId, itemId, { status: 'frozen' });
+}
+
+function cancelStalledItem(type, projectId, itemId) {
+  updateStalledItem(type, projectId, itemId, { status: 'cancelled' });
+}
+
+function markStalledItemMovement(type, projectId, itemId) {
+  updateStalledItem(type, projectId, itemId, {});
+}
+
 function setupEntityControls() {
   document.addEventListener('click', (event) => {
     const closeButton = event.target.closest('[data-modal-close]');
@@ -938,7 +1087,7 @@ function setupEntityControls() {
     event.preventDefault();
     event.stopPropagation();
 
-    const { action, projectId, groupId, taskId } = actionButton.dataset;
+    const { action, projectId, groupId, taskId, itemType, itemId } = actionButton.dataset;
 
     if (action === 'create-project') openCreateProjectForm();
     if (action === 'edit-project') openEditProjectForm(projectId);
@@ -949,6 +1098,10 @@ function setupEntityControls() {
     if (action === 'create-task') openCreateTaskForm(projectId, groupId);
     if (action === 'edit-task') openEditTaskForm(projectId, taskId);
     if (action === 'delete-task') deleteTask(projectId, taskId);
+    if (action === 'open-stalled') openStalledItem(projectId);
+    if (action === 'freeze-stalled') freezeStalledItem(itemType, projectId, itemId);
+    if (action === 'cancel-stalled') cancelStalledItem(itemType, projectId, itemId);
+    if (action === 'touch-stalled') markStalledItemMovement(itemType, projectId, itemId);
   });
 
   document.addEventListener('submit', handleEntityFormSubmit);
@@ -1101,7 +1254,11 @@ function renderSelectedProject(projects) {
 
       task.status = checkbox.checked ? 'done' : 'planned';
       if (checkbox.checked) {
-        task.lastActivityDate = getTodayIsoDate();
+        const today = getTodayIsoDate();
+        task.lastActivityDate = today;
+        const group = getTaskGroup(project, task.id);
+        if (group) group.lastActivityDate = today;
+        project.lastActivityDate = today;
       }
       persistProjects();
       renderAll(projects);
@@ -1118,7 +1275,7 @@ function renderTaskGroup(group, index, taskLookup, projectId) {
       <summary>
         <span class="task-group__heading">
           <span class="task-group__title">${escapeHtml(group.title)}</span>
-          <span class="task-group__stats">Вес ${escapeHtml(group.weight)} · ${tasks.length} задач · ${progress}%</span>
+          <span class="task-group__stats">Вес ${escapeHtml(group.weight)} · ${tasks.length} задач · ${progress}% · активность ${formatDate(group.lastActivityDate)}</span>
         </span>
         <span class="task-group__summary-actions">
           ${getStatusBadge(group.status)}
@@ -1235,6 +1392,81 @@ function renderNextActions(projects) {
   bindDoneButtons(projects);
 }
 
+
+function getStalledTypeLabel(type) {
+  return {
+    project: 'Проект',
+    group: 'Группа задач',
+    task: 'Подзадача'
+  }[type] || 'Элемент';
+}
+
+function renderStalledCard(entry) {
+  const { type, item, project, group } = entry;
+  const itemId = type === 'project' ? project.id : item.id;
+  const days = getDaysSince(item.lastActivityDate);
+  const parentTitle = type === 'project' ? project.title : project.title;
+  const location = type === 'task' ? `${project.title} · ${group.title}` : parentTitle;
+
+  return `
+    <article class="stalled-card">
+      <div class="stalled-card__main">
+        <div>
+          <p class="eyebrow">${escapeHtml(getStalledTypeLabel(type))} · ${escapeHtml(location)}</p>
+          <h3>${escapeHtml(item.title)}</h3>
+        </div>
+        ${getStatusBadge(item.status)}
+      </div>
+      <dl class="stalled-card__meta">
+        <div>
+          <dt>Родительский проект</dt>
+          <dd>${escapeHtml(parentTitle)}</dd>
+        </div>
+        <div>
+          <dt>Без движения</dt>
+          <dd>${days} дн.</dd>
+        </div>
+        <div>
+          <dt>Статус</dt>
+          <dd>${escapeHtml(getStatusMeta(item.status).label)}</dd>
+        </div>
+        <div>
+          <dt>Последнее движение</dt>
+          <dd>${formatDate(item.lastActivityDate)}</dd>
+        </div>
+      </dl>
+      <div class="stalled-card__actions">
+        <button class="mini-button" type="button" data-action="open-stalled" data-project-id="${escapeHtml(project.id)}">Открыть</button>
+        <button class="mini-button" type="button" data-action="freeze-stalled" data-item-type="${escapeHtml(type)}" data-project-id="${escapeHtml(project.id)}" data-item-id="${escapeHtml(itemId)}">Заморозить</button>
+        <button class="mini-button mini-button--danger" type="button" data-action="cancel-stalled" data-item-type="${escapeHtml(type)}" data-project-id="${escapeHtml(project.id)}" data-item-id="${escapeHtml(itemId)}">Отменить</button>
+        <button class="mini-button mini-button--success" type="button" data-action="touch-stalled" data-item-type="${escapeHtml(type)}" data-project-id="${escapeHtml(project.id)}" data-item-id="${escapeHtml(itemId)}">Отметить движение</button>
+      </div>
+    </article>
+  `;
+}
+
+function renderStalledSection(projects) {
+  const items = getStalledItems(projects);
+  const counter = document.querySelector('[data-stalled-count]');
+  const projectsList = document.querySelector('#stalled-projects-list');
+  const groupsList = document.querySelector('#stalled-groups-list');
+  const tasksList = document.querySelector('#stalled-tasks-list');
+
+  if (counter) counter.textContent = items.length;
+
+  const renderList = (list, type, emptyText) => {
+    if (!list) return;
+    const filtered = items.filter((entry) => entry.type === type);
+    list.innerHTML = filtered.length
+      ? filtered.map(renderStalledCard).join('')
+      : `<div class="empty-section empty-section--compact">${escapeHtml(emptyText)}</div>`;
+  };
+
+  renderList(projectsList, 'project', 'Нет зависших проектов: завершённые, замороженные и отменённые проекты не учитываются.');
+  renderList(groupsList, 'group', 'Нет зависших групп задач.');
+  renderList(tasksList, 'task', 'Нет зависших подзадач.');
+}
+
 function fillDemoWidgets(projects) {
   const active = document.querySelector('[data-widget="active"]');
   const next = document.querySelector('[data-widget="next"]');
@@ -1245,7 +1477,7 @@ function fillDemoWidgets(projects) {
   const availableActions = getAvailableActions(projects).length;
   const taskLookup = createTaskLookup(projects);
   const blockedTasks = getAllTasks(projects).filter((task) => isTaskBlocked(task, taskLookup)).length;
-  const inactiveProjects = projects.filter((project) => getDaysSince(project.lastActivityDate) >= 14).length;
+  const inactiveProjects = getStalledItems(projects).length;
 
   if (active) active.textContent = activeProjects;
   if (next) next.textContent = availableActions;
@@ -1259,6 +1491,7 @@ function renderAll(projects) {
   renderSelectedProject(projects);
   fillDemoWidgets(projects);
   renderNextActions(projects);
+  renderStalledSection(projects);
   setActiveSection(activeSectionId);
 }
 
