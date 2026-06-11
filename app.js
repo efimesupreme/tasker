@@ -696,7 +696,7 @@ function getDependencyTitles(task, taskLookup) {
   });
 }
 
-function renderTaskLockMessage(task, taskLookup) {
+function renderBlockedTaskMessage(task, taskLookup) {
   const blockingDependencies = getBlockingDependencies(task, taskLookup);
   const titles = blockingDependencies.map((dependency) => dependency.title).join(', ');
 
@@ -834,7 +834,7 @@ function setupSectionNavigation() {
   setActiveSection(initialSection);
 }
 
-function completeTask(taskId, projects) {
+function completeTaskById(taskId, projects) {
   const taskLookup = createTaskLookup(projects);
   const task = taskLookup.get(taskId);
 
@@ -1029,7 +1029,7 @@ function getStalledItemContext(type, projectId, itemId) {
   return null;
 }
 
-function touchStalledParents(context, today) {
+function markStalledParentsActivity(context, today) {
   if (context.type !== 'project') {
     context.project.lastActivityDate = today;
   }
@@ -1048,7 +1048,7 @@ function openStalledItem(projectId) {
   document.querySelector('#selected-project-details')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
 }
 
-function updateStalledItem(type, projectId, itemId, updates) {
+function applyStalledItemUpdate(type, projectId, itemId, updates) {
   const context = getStalledItemContext(type, projectId, itemId);
 
   if (!context) return;
@@ -1056,21 +1056,21 @@ function updateStalledItem(type, projectId, itemId, updates) {
   const today = getTodayIsoDate();
   Object.assign(context.item, updates);
   context.item.lastActivityDate = today;
-  touchStalledParents(context, today);
+  markStalledParentsActivity(context, today);
   persistProjects();
   renderAll(projects);
 }
 
 function freezeStalledItem(type, projectId, itemId) {
-  updateStalledItem(type, projectId, itemId, { status: 'frozen' });
+  applyStalledItemUpdate(type, projectId, itemId, { status: 'frozen' });
 }
 
 function cancelStalledItem(type, projectId, itemId) {
-  updateStalledItem(type, projectId, itemId, { status: 'cancelled' });
+  applyStalledItemUpdate(type, projectId, itemId, { status: 'cancelled' });
 }
 
 function markStalledItemMovement(type, projectId, itemId) {
-  updateStalledItem(type, projectId, itemId, {});
+  applyStalledItemUpdate(type, projectId, itemId, {});
 }
 
 function setupEntityControls() {
@@ -1235,7 +1235,7 @@ function renderSelectedProject(projects) {
 
       if (task && isTaskBlocked(task, taskLookup)) {
         event.preventDefault();
-        updateBlockedTaskNotice(renderTaskLockMessage(task, taskLookup));
+        updateBlockedTaskNotice(renderBlockedTaskMessage(task, taskLookup));
       }
     });
 
@@ -1248,7 +1248,7 @@ function renderSelectedProject(projects) {
 
       if (isTaskBlocked(task, taskLookup)) {
         checkbox.checked = false;
-        updateBlockedTaskNotice(renderTaskLockMessage(task, taskLookup));
+        updateBlockedTaskNotice(renderBlockedTaskMessage(task, taskLookup));
         return;
       }
 
@@ -1360,9 +1360,9 @@ function renderActionCard(action, options = {}) {
   `;
 }
 
-function bindDoneButtons(projects) {
+function bindCompleteTaskButtons(projects) {
   document.querySelectorAll('[data-complete-task-id]').forEach((button) => {
-    button.addEventListener('click', () => completeTask(button.dataset.completeTaskId, projects));
+    button.addEventListener('click', () => completeTaskById(button.dataset.completeTaskId, projects));
   });
 }
 
@@ -1389,7 +1389,7 @@ function renderNextActions(projects) {
       : '<div class="empty-section empty-section--compact">Нет действий для правой колонки.</div>';
   }
 
-  bindDoneButtons(projects);
+  bindCompleteTaskButtons(projects);
 }
 
 
@@ -1467,7 +1467,7 @@ function renderStalledSection(projects) {
   renderList(tasksList, 'task', 'Нет зависших подзадач.');
 }
 
-function fillDemoWidgets(projects) {
+function updateDashboardWidgets(projects) {
   const active = document.querySelector('[data-widget="active"]');
   const next = document.querySelector('[data-widget="next"]');
   const blocked = document.querySelector('[data-widget="blocked"]');
@@ -1477,19 +1477,19 @@ function fillDemoWidgets(projects) {
   const availableActions = getAvailableActions(projects).length;
   const taskLookup = createTaskLookup(projects);
   const blockedTasks = getAllTasks(projects).filter((task) => isTaskBlocked(task, taskLookup)).length;
-  const inactiveProjects = getStalledItems(projects).length;
+  const stalledItems = getStalledItems(projects).length;
 
   if (active) active.textContent = activeProjects;
   if (next) next.textContent = availableActions;
   if (blocked) blocked.textContent = blockedTasks;
-  if (stalled) stalled.textContent = inactiveProjects;
+  if (stalled) stalled.textContent = stalledItems;
 }
 
 function renderAll(projects) {
   recalculateAllProgress(projects);
   renderProjectCards(projects);
   renderSelectedProject(projects);
-  fillDemoWidgets(projects);
+  updateDashboardWidgets(projects);
   renderNextActions(projects);
   renderStalledSection(projects);
   setActiveSection(activeSectionId);
