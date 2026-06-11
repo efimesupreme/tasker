@@ -3126,3 +3126,128 @@ h1 {
     flex-direction: column-reverse;
   }
 }
+
+/* Compact summary-task controls */
+.task-group--card {
+  gap: 10px;
+  padding: 14px 16px 16px;
+}
+
+.task-group__header,
+.task-group__meta-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.task-group__heading {
+  min-width: 0;
+}
+
+.task-group__title {
+  display: block;
+  overflow-wrap: anywhere;
+}
+
+.task-group__meta-row {
+  align-items: center;
+}
+
+.task-group__stats {
+  min-width: 0;
+}
+
+.task-group__edit,
+.task-item__edit {
+  display: inline-grid;
+  flex: 0 0 32px;
+  width: 32px;
+  height: 32px;
+  min-height: 32px;
+  padding: 0;
+  place-items: center;
+  border: 1px solid rgba(79, 140, 255, 0.28);
+  border-radius: 999px;
+  background: rgba(79, 140, 255, 0.08);
+  color: #d3e1ff;
+  font-size: 0.95rem;
+  font-weight: 850;
+  line-height: 1;
+}
+
+.task-group__edit:hover,
+.task-group__edit:focus-visible,
+.task-item__edit:hover,
+.task-item__edit:focus-visible {
+  border-color: rgba(134, 234, 255, 0.58);
+  background: rgba(79, 140, 255, 0.16);
+  outline: 0;
+}
+
+.task-group__edit:focus-visible,
+.task-item__edit:focus-visible {
+  box-shadow: var(--focus-ring);
+}
+
+.task-group__meta-row .add-task-button {
+  flex: 0 0 auto;
+  min-height: 34px;
+  padding: 0 12px;
+  white-space: nowrap;
+}
+
+.task-group--card .task-group__progress {
+  height: 6px;
+  margin: 0;
+}
+
+.task-group--card .task-list {
+  gap: 8px;
+  padding: 0;
+}
+
+@media (max-width: 760px) {
+  .task-group__header,
+  .task-group__meta-row {
+    display: flex;
+    align-items: center;
+    flex-direction: row;
+    justify-content: space-between;
+    gap: 8px;
+  }
+
+  .task-group--card {
+    gap: 8px;
+    padding: 11px;
+  }
+
+  .task-group__meta-row {
+    flex-wrap: wrap;
+  }
+
+  .task-group__meta-row .add-task-button {
+    min-height: 34px;
+  }
+}
+
+@media (max-width: 520px) {
+  .task-group__header,
+  .task-group__meta-row {
+    align-items: center;
+    flex-direction: row;
+  }
+
+  .task-group__edit,
+  .task-item__edit {
+    flex-basis: 32px;
+    width: 32px;
+    height: 32px;
+    min-height: 32px;
+  }
+
+  .task-group__meta-row .add-task-button {
+    flex: 0 0 auto;
+    width: auto;
+  }
+}

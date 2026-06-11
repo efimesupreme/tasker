@@ -525,14 +525,21 @@ function renderProjectForm(project = {}) {
 }
 
 function renderGroupForm(projectId, group = {}) {
+  const deleteButton = group.id
+    ? `<button class="mini-button mini-button--danger entity-form__delete" type="button" data-action="delete-group" data-project-id="${escapeHtml(projectId)}" data-group-id="${escapeHtml(group.id)}">Удалить суммарную задачу</button>`
+    : '';
+
   return `
     <form class="entity-form" data-form-type="group" data-project-id="${escapeHtml(projectId)}" data-group-id="${escapeHtml(group.id || '')}">
       <label>Название<input name="title" required maxlength="80" value="${escapeHtml(group.title || '')}"></label>
       <label>Статус<select name="status">${getStatusOptions(group.status || 'planned')}</select></label>
       <label>Вес<input name="weight" type="number" min="1" max="100" step="1" value="${escapeHtml(group.weight || 1)}"></label>
-      <div class="entity-form__actions">
-        <button class="ghost-button" type="button" data-modal-close>Отмена</button>
-        <button class="primary-button" type="submit">Сохранить</button>
+      <div class="entity-form__actions entity-form__actions--split">
+        <div class="entity-form__danger">${deleteButton}</div>
+        <div class="entity-form__save-actions">
+          <button class="ghost-button" type="button" data-modal-close>Отмена</button>
+          <button class="primary-button" type="submit">Сохранить</button>
+        </div>
       </div>
     </form>
   `;
@@ -578,12 +585,12 @@ function openEditProjectForm(projectId) {
 }
 
 function openCreateGroupForm(projectId) {
-  openEntityModal('Новая крупная задача', renderGroupForm(projectId));
+  openEntityModal('Новая суммарная задача', renderGroupForm(projectId));
 }
 
 function openEditGroupForm(projectId, groupId) {
   const group = findGroup(findProject(projectId), groupId);
-  if (group) openEntityModal('Редактирование крупной задачи', renderGroupForm(projectId, group));
+  if (group) openEntityModal('Редактирование суммарной задачи', renderGroupForm(projectId, group));
 }
 
 function openCreateTaskForm(projectId, groupId) {
@@ -1042,7 +1049,7 @@ function handleEntityFormSubmit(event) {
 
 function deleteProject(projectId) {
   const project = findProject(projectId);
-  if (!project || !window.confirm(`Удалить проект «${project.title}» со всеми крупными задачами и подзадачами?`)) return;
+  if (!project || !window.confirm(`Удалить проект «${project.title}» со всеми суммарными задачами и подзадачами?`)) return;
 
   projects = projects.filter((item) => item.id !== projectId);
   selectedProjectId = projects[0]?.id || null;
@@ -1054,7 +1061,7 @@ function deleteProject(projectId) {
 function deleteGroup(projectId, groupId) {
   const project = findProject(projectId);
   const group = findGroup(project, groupId);
-  if (!project || !group || !window.confirm(`Удалить крупную задачу «${group.title}» со всеми подзадачами?`)) return;
+  if (!project || !group || !window.confirm(`Удалить суммарную задачу «${group.title}» со всеми подзадачами?`)) return;
 
   const removedTaskIds = new Set((group.tasks || []).map((task) => task.id));
   project.groups = project.groups.filter((item) => item.id !== groupId);
@@ -1062,7 +1069,9 @@ function deleteGroup(projectId, groupId) {
     task.dependsOn = (task.dependsOn || []).filter((dependencyId) => !removedTaskIds.has(dependencyId));
   });
   project.lastActivityDate = getTodayIsoDate();
+  recalculateProjectProgress(project);
   persistProjects();
+  closeEntityModal();
   renderAll(projects);
 }
 
@@ -1288,7 +1297,7 @@ function renderProjectFilterBar(activeFilter) {
 function getProjectFilterEmptyText(filter) {
   if (filter === 'next') return 'Нет доступных подзадач';
   if (filter === 'stalled') return 'Нет зависших элементов';
-  return 'В проекте пока нет крупных задач. Добавьте первую крупную задачу.';
+  return 'В проекте пока нет суммарных задач. Добавьте первую суммарную задачу.';
 }
 
 function getTaskCompletionStats(tasks) {
@@ -1346,7 +1355,7 @@ function renderSelectedProject(projects) {
       </div>
       <div class="project-workspace__actions">
         <button class="mini-button" type="button" data-action="edit-project" data-project-id="${escapeHtml(project.id)}">Редактировать</button>
-        <button class="primary-button" type="button" data-action="create-group" data-project-id="${escapeHtml(project.id)}">+ Крупная задача</button>
+        <button class="primary-button" type="button" data-action="create-group" data-project-id="${escapeHtml(project.id)}">+ Суммарная задача</button>
       </div>
     </article>
 
@@ -1354,8 +1363,8 @@ function renderSelectedProject(projects) {
 
     ${renderProjectFilterBar(activeFilter)}
 
-    <section class="project-workspace__groups" aria-label="Список крупных задач проекта">
-      <div class="task-groups" aria-label="Крупные задачи проекта ${escapeHtml(project.title)}">
+    <section class="project-workspace__groups" aria-label="Список суммарных задач проекта">
+      <div class="task-groups" aria-label="Суммарные задачи проекта ${escapeHtml(project.title)}">
         ${groupsHtml}
       </div>
     </section>
@@ -1403,25 +1412,21 @@ function renderTaskGroup(group, taskLookup, projectId, visibleTasks, options = {
   const tasks = visibleTasks || group.tasks || [];
   const allTasks = group.tasks || [];
   const completion = getTaskCompletionStats(allTasks);
-  const emptyText = options.isStalledGroup ? 'Крупная задача без движения 14+ дней' : 'В этой крупной задаче пока нет подзадач.';
+  const emptyText = options.isStalledGroup ? 'Суммарная задача без движения 14+ дней' : 'В этой суммарной задаче пока нет подзадач.';
 
   return `
     <article class="task-group task-group--card">
       <div class="task-group__header">
         <div class="task-group__heading">
           <span class="task-group__title">${escapeHtml(group.title)}</span>
-          <span class="task-group__stats">${progress}% · ${escapeHtml(renderCompletionText(completion))}</span>
         </div>
-        <div class="task-group__header-actions">
-          ${getStatusBadge(group.status)}
-          <div class="entity-actions task-group__actions">
-            <button class="mini-button" type="button" data-action="edit-group" data-project-id="${escapeHtml(projectId)}" data-group-id="${escapeHtml(group.id)}">Редактировать</button>
-            <button class="mini-button mini-button--danger" type="button" data-action="delete-group" data-project-id="${escapeHtml(projectId)}" data-group-id="${escapeHtml(group.id)}">Удалить</button>
-            <button class="add-task-button" type="button" data-action="create-task" data-project-id="${escapeHtml(projectId)}" data-group-id="${escapeHtml(group.id)}">+ Подзадача</button>
-          </div>
-        </div>
+        <button class="task-group__edit" type="button" data-action="edit-group" data-project-id="${escapeHtml(projectId)}" data-group-id="${escapeHtml(group.id)}" aria-label="Редактировать суммарную задачу">&#9998;</button>
       </div>
-      <div class="task-group__progress" aria-label="Прогресс крупной задачи ${escapeHtml(group.title)}: ${progress}%">
+      <div class="task-group__meta-row">
+        <span class="task-group__stats">${progress}% · ${escapeHtml(renderCompletionText(completion))}</span>
+        <button class="add-task-button" type="button" data-action="create-task" data-project-id="${escapeHtml(projectId)}" data-group-id="${escapeHtml(group.id)}">+ Подзадача</button>
+      </div>
+      <div class="task-group__progress" aria-label="Прогресс суммарной задачи ${escapeHtml(group.title)}: ${progress}%">
         <span style="width: ${progress}%;"></span>
       </div>
       <div class="task-list">
@@ -1451,7 +1456,7 @@ function renderTask(task, taskLookup, projectId) {
             <strong>${isBlocked ? '<span class="task-item__lock" aria-hidden="true">🔒</span>' : ''}${escapeHtml(task.title)}</strong>
           </span>
         </label>
-        <button class="task-item__edit" type="button" data-action="edit-task" data-project-id="${escapeHtml(projectId)}" data-task-id="${escapeHtml(task.id)}" aria-label="Редактировать подзадачу">✎</button>
+        <button class="task-item__edit" type="button" data-action="edit-task" data-project-id="${escapeHtml(projectId)}" data-task-id="${escapeHtml(task.id)}" aria-label="Редактировать подзадачу">&#9998;</button>
       </div>
       ${task.note ? `<p>${escapeHtml(task.note)}</p>` : ''}
       ${dependencyText ? `<span class="task-item__depends" id="task-depends-${escapeHtml(task.id)}">${isBlocked ? 'Зависит от: ' : 'Зависимости: '}${escapeHtml(dependencyText)}</span>` : ''}
@@ -1478,7 +1483,7 @@ function renderActionCard(action, options = {}) {
           <dd>${escapeHtml(project.title)}</dd>
         </div>
         <div>
-          <dt>Крупная задача</dt>
+          <dt>Суммарная задача</dt>
           <dd>${escapeHtml(group.title)}</dd>
         </div>
         <div>
@@ -1533,7 +1538,7 @@ function renderNextActions(projects) {
 function getStalledTypeLabel(type) {
   return {
     project: 'Проект',
-    group: 'Крупная задача',
+    group: 'Суммарная задача',
     task: 'Подзадача'
   }[type] || 'Элемент';
 }
@@ -1603,7 +1608,7 @@ function renderStalledSection(projects) {
   };
 
   renderList(projectsList, 'project', 'Нет зависших проектов: завершённые, замороженные и отменённые проекты не учитываются.', '#stalled-projects-list');
-  renderList(groupsList, 'group', 'Нет зависших крупных задач.', '#stalled-groups-list');
+  renderList(groupsList, 'group', 'Нет зависших суммарных задач.', '#stalled-groups-list');
   renderList(tasksList, 'task', 'Нет зависших подзадач.', '#stalled-tasks-list');
 }
 
