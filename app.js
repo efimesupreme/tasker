@@ -280,8 +280,10 @@ const demoProjects = [
   }
 ];
 
-let projects = demoProjects;
-let selectedProjectId = 'galaxy-heroes';
+const STORAGE_KEY = 'tasker.projects.v1';
+
+let projects = loadProjects();
+let selectedProjectId = projects.some((project) => project.id === 'galaxy-heroes') ? 'galaxy-heroes' : projects[0]?.id || null;
 let activeSectionId = 'dashboard';
 
 const projectStatuses = {
@@ -311,6 +313,33 @@ const statusTextColors = {
   violet: '#dbc4ff',
   cyan: '#c2f5ff'
 };
+
+
+function cloneProjects(projectList) {
+  return JSON.parse(JSON.stringify(projectList));
+}
+
+function loadProjects() {
+  try {
+    const savedProjects = JSON.parse(localStorage.getItem(STORAGE_KEY) || 'null');
+
+    if (Array.isArray(savedProjects)) {
+      return savedProjects;
+    }
+  } catch (error) {
+    console.warn('Не удалось прочитать сохранённые проекты, используются демо-данные.', error);
+  }
+
+  return cloneProjects(demoProjects);
+}
+
+function persistProjects() {
+  try {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(projects));
+  } catch (error) {
+    console.warn('Не удалось сохранить проекты в браузере.', error);
+  }
+}
 
 function escapeHtml(value) {
   return String(value)
@@ -382,15 +411,26 @@ function hasDependencyPath(project, fromTaskId, targetTaskId, visited = new Set(
 }
 
 function getDependencyOptions(project, currentTaskId, selectedDependencyIds = []) {
-  return getProjectTasks(project)
-    .filter((task) => task.id !== currentTaskId)
-    .map((task) => {
-      const wouldCycle = currentTaskId && hasDependencyPath(project, task.id, currentTaskId);
-      const isSelected = selectedDependencyIds.includes(task.id);
-      const label = wouldCycle ? `${task.title} — создаст цикл` : task.title;
+  const groups = project?.groups || [];
+  const options = groups.map((group) => {
+    const taskOptions = (group.tasks || [])
+      .filter((task) => task.id !== currentTaskId)
+      .map((task) => {
+        const wouldCycle = currentTaskId && hasDependencyPath(project, task.id, currentTaskId);
+        const isSelected = selectedDependencyIds.includes(task.id);
+        const label = wouldCycle ? `${task.title} — создаст цикл` : task.title;
 
-      return `<option value="${escapeHtml(task.id)}" ${isSelected ? 'selected' : ''} ${wouldCycle ? 'disabled' : ''}>${escapeHtml(label)}</option>`;
-    }).join('');
+        return `<option value="${escapeHtml(task.id)}" ${isSelected ? 'selected' : ''} ${wouldCycle ? 'disabled' : ''}>${escapeHtml(label)}</option>`;
+      }).join('');
+
+    if (!taskOptions) {
+      return '';
+    }
+
+    return `<optgroup label="${escapeHtml(group.title)}">${taskOptions}</optgroup>`;
+  }).join('');
+
+  return options || '<option disabled>В проекте пока нет других подзадач</option>';
 }
 
 function getSelectedValues(select) {
@@ -729,6 +769,7 @@ function completeTask(taskId, projects) {
 
   task.status = 'done';
   task.lastActivityDate = getTodayIsoDate();
+  persistProjects();
   renderAll(projects);
 }
 
@@ -838,6 +879,7 @@ function handleEntityFormSubmit(event) {
   if (form.dataset.formType === 'group') saveGroup(form);
   if (form.dataset.formType === 'task') saveTask(form);
 
+  persistProjects();
   closeEntityModal();
   renderAll(projects);
 }
@@ -848,6 +890,7 @@ function deleteProject(projectId) {
 
   projects = projects.filter((item) => item.id !== projectId);
   selectedProjectId = projects[0]?.id || null;
+  persistProjects();
   renderAll(projects);
 }
 
@@ -862,6 +905,7 @@ function deleteGroup(projectId, groupId) {
     task.dependsOn = (task.dependsOn || []).filter((dependencyId) => !removedTaskIds.has(dependencyId));
   });
   project.lastActivityDate = getTodayIsoDate();
+  persistProjects();
   renderAll(projects);
 }
 
@@ -876,6 +920,7 @@ function deleteTask(projectId, taskId) {
     item.dependsOn = (item.dependsOn || []).filter((dependencyId) => dependencyId !== taskId);
   });
   project.lastActivityDate = getTodayIsoDate();
+  persistProjects();
   renderAll(projects);
 }
 
@@ -1058,6 +1103,7 @@ function renderSelectedProject(projects) {
       if (checkbox.checked) {
         task.lastActivityDate = getTodayIsoDate();
       }
+      persistProjects();
       renderAll(projects);
     });
   });
