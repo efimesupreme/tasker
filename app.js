@@ -6,7 +6,39 @@ const demoProjects = [
     status: 'active',
     progress: 0,
     lastActivityDate: '2026-06-11',
-    nextAction: 'Выбрать одну доступную подзадачу и продвинуть её до следующего результата.',
+    nextAction: 'Выбрать одну доступную подзадачу или задачу и продвинуть её до следующего результата.',
+    tasks: [
+      {
+        id: 'sample-quick-check',
+        title: 'Быстро проверить список задач',
+        status: 'planned',
+        weight: 1,
+        dependsOn: [],
+        lastActivityDate: '2026-06-11',
+        note: 'Обычная задача уровня проекта без вложенных подзадач.',
+        blocked: false
+      },
+      {
+        id: 'sample-small-single',
+        title: 'Закрыть маленькую задачу без декомпозиции',
+        status: 'active',
+        weight: 1,
+        dependsOn: [],
+        lastActivityDate: '2026-06-11',
+        note: 'Её можно отметить выполненной сразу из списка задач проекта.',
+        blocked: false
+      },
+      {
+        id: 'sample-day-result',
+        title: 'Отметить результат дня',
+        status: 'planned',
+        weight: 1,
+        dependsOn: ['sample-small-single'],
+        lastActivityDate: '2026-06-11',
+        note: 'Эта задача станет доступна после закрытия маленькой задачи.',
+        blocked: false
+      }
+    ],
     groups: [
       {
         id: 'sample-structure',
@@ -33,7 +65,7 @@ const demoProjects = [
             weight: 1,
             dependsOn: [],
             lastActivityDate: '2026-06-11',
-            note: 'Выделить крупные направления работы, чтобы видеть общую структуру.',
+            note: 'Выделить направления работы, чтобы видеть общую структуру.',
             blocked: false
           },
           {
@@ -193,12 +225,21 @@ function getLatestDate(...dateValues) {
 function normalizeProjects(projectList) {
   return projectList.map((project) => {
     project.groups = project.groups || [];
+    project.tasks = project.tasks || [];
     project.lastActivityDate = project.lastActivityDate || getTodayIsoDate();
+
+    project.tasks.forEach((task) => {
+      task.dependsOn = task.dependsOn || [];
+      task.lastActivityDate = task.lastActivityDate || project.lastActivityDate;
+      task.weight = Number(task.weight) || 1;
+    });
 
     project.groups.forEach((group) => {
       group.tasks = group.tasks || [];
       group.tasks.forEach((task) => {
+        task.dependsOn = task.dependsOn || [];
         task.lastActivityDate = task.lastActivityDate || project.lastActivityDate;
+        task.weight = Number(task.weight) || 1;
       });
       group.lastActivityDate = group.lastActivityDate || getLatestDate(
         ...group.tasks.map((task) => task.lastActivityDate),
@@ -280,6 +321,10 @@ function findTask(project, taskId) {
   return getProjectTasks(project).find((task) => task.id === taskId);
 }
 
+function findProjectTask(project, taskId) {
+  return (project?.tasks || []).find((task) => task.id === taskId);
+}
+
 function getTaskGroup(project, taskId) {
   return project?.groups.find((group) => (group.tasks || []).some((task) => task.id === taskId));
 }
@@ -306,8 +351,21 @@ function hasDependencyPath(project, fromTaskId, targetTaskId, visited = new Set(
 }
 
 function getDependencyOptions(project, currentTaskId, selectedDependencyIds = []) {
-  const groups = project?.groups || [];
-  const options = groups.map((group) => {
+  const projectTaskOptions = (project?.tasks || [])
+    .filter((task) => task.id !== currentTaskId)
+    .map((task) => {
+      const wouldCycle = currentTaskId && hasDependencyPath(project, task.id, currentTaskId);
+      const isSelected = selectedDependencyIds.includes(task.id);
+      const label = wouldCycle ? `${task.title} — создаст цикл` : task.title;
+
+      return `<option value="${escapeHtml(task.id)}" ${isSelected ? 'selected' : ''} ${wouldCycle ? 'disabled' : ''}>${escapeHtml(label)}</option>`;
+    }).join('');
+
+  const projectTaskGroup = projectTaskOptions
+    ? `<optgroup label="Задачи проекта">${projectTaskOptions}</optgroup>`
+    : '';
+
+  const groupOptions = (project?.groups || []).map((group) => {
     const taskOptions = (group.tasks || [])
       .filter((task) => task.id !== currentTaskId)
       .map((task) => {
@@ -325,7 +383,7 @@ function getDependencyOptions(project, currentTaskId, selectedDependencyIds = []
     return `<optgroup label="${escapeHtml(group.title)}">${taskOptions}</optgroup>`;
   }).join('');
 
-  return options || '<option disabled>В проекте пока нет других подзадач</option>';
+  return projectTaskGroup + groupOptions || '<option disabled>В проекте пока нет других задач</option>';
 }
 
 function getSelectedValues(select) {
@@ -431,6 +489,36 @@ function renderTaskForm(projectId, groupId, task = {}) {
   `;
 }
 
+function renderProjectTaskForm(projectId, task = {}) {
+  const project = findProject(projectId);
+  const dependsOn = task.dependsOn || [];
+  const deleteButton = task.id
+    ? `<button class="mini-button mini-button--danger entity-form__delete" type="button" data-action="delete-project-task" data-project-id="${escapeHtml(projectId)}" data-task-id="${escapeHtml(task.id)}">Удалить задачу</button>`
+    : '';
+
+  return `
+    <form class="entity-form" data-form-type="project-task" data-project-id="${escapeHtml(projectId)}" data-task-id="${escapeHtml(task.id || '')}">
+      <label>Название<input name="title" required maxlength="100" value="${escapeHtml(task.title || '')}"></label>
+      <label>Статус<select name="status">${getStatusOptions(task.status || 'planned')}</select></label>
+      <label>Вес<input name="weight" type="number" min="1" max="100" step="1" value="${escapeHtml(task.weight || 1)}"></label>
+      <label>Заметка<textarea name="note" rows="3">${escapeHtml(task.note || '')}</textarea></label>
+      <label>Предшественники
+        <select name="dependsOn" multiple size="6">
+          ${getDependencyOptions(project, task.id, dependsOn)}
+        </select>
+        <span class="entity-form__hint">Можно выбрать несколько задач этого проекта. Сама задача и очевидные циклы недоступны.</span>
+      </label>
+      <div class="entity-form__actions entity-form__actions--split">
+        <div class="entity-form__danger">${deleteButton}</div>
+        <div class="entity-form__save-actions">
+          <button class="ghost-button" type="button" data-modal-close>Отмена</button>
+          <button class="primary-button" type="submit">Сохранить</button>
+        </div>
+      </div>
+    </form>
+  `;
+}
+
 function openCreateProjectForm() {
   openEntityModal('Новый проект', renderProjectForm());
 }
@@ -442,6 +530,10 @@ function openEditProjectForm(projectId) {
 
 function openCreateGroupForm(projectId) {
   openEntityModal('Новая суммарная задача', renderGroupForm(projectId));
+}
+
+function openCreateProjectTaskForm(projectId) {
+  openEntityModal('Новая задача', renderProjectTaskForm(projectId));
 }
 
 function openEditGroupForm(projectId, groupId) {
@@ -460,6 +552,14 @@ function openEditTaskForm(projectId, taskId) {
 
   if (group && task) {
     openEntityModal('Редактирование подзадачи', renderTaskForm(projectId, group.id, task));
+  }
+}
+
+function openEditProjectTaskForm(projectId, taskId) {
+  const task = findProjectTask(findProject(projectId), taskId);
+
+  if (task) {
+    openEntityModal('Редактирование задачи', renderProjectTaskForm(projectId, task));
   }
 }
 
@@ -504,6 +604,12 @@ function getStalledItems(projects) {
       return items;
     }
 
+    (project.tasks || []).forEach((task) => {
+      if (isStalledItem(task)) {
+        items.push({ type: 'project-task', item: task, project, task });
+      }
+    });
+
     (project.groups || []).forEach((group) => {
       if (isStalledItem(group)) {
         items.push({ type: 'group', item: group, project, group });
@@ -524,8 +630,15 @@ function getStalledItems(projects) {
   }).sort((first, second) => getDaysSince(second.item.lastActivityDate) - getDaysSince(first.item.lastActivityDate));
 }
 
-function getProjectTasks(project) {
+function getProjectSubtasks(project) {
   return (project?.groups || []).flatMap((group) => group.tasks || []);
+}
+
+function getProjectTasks(project) {
+  return [
+    ...(project?.tasks || []),
+    ...getProjectSubtasks(project)
+  ];
 }
 
 function getAllTasks(projects) {
@@ -562,11 +675,16 @@ function getAvailableActions(projects) {
   const taskLookup = createTaskLookup(projects);
 
   return projects.flatMap((project) => {
-    return project.groups.flatMap((group) => {
+    const projectTaskActions = (project.tasks || [])
+      .filter((task) => isTaskAvailable(task, project, taskLookup))
+      .map((task) => ({ task, group: null, project, type: 'project-task' }));
+    const subtaskActions = (project.groups || []).flatMap((group) => {
       return (group.tasks || [])
         .filter((task) => isTaskAvailable(task, project, taskLookup))
-        .map((task) => ({ task, group, project }));
+        .map((task) => ({ task, group, project, type: 'task' }));
     });
+
+    return [...projectTaskActions, ...subtaskActions];
   }).sort((first, second) => {
     return new Date(second.task.lastActivityDate) - new Date(first.task.lastActivityDate);
   });
@@ -659,8 +777,12 @@ function calculateGroupProgress(group) {
   return calculateWeightedProgress(group.tasks || [], calculateTaskContribution);
 }
 
+function calculateProjectItemProgress(item) {
+  return Array.isArray(item?.tasks) ? calculateGroupProgress(item) : calculateTaskContribution(item);
+}
+
 function calculateProjectProgress(project) {
-  return calculateWeightedProgress(project.groups || [], calculateGroupProgress);
+  return calculateWeightedProgress([...(project.tasks || []), ...(project.groups || [])], calculateProjectItemProgress);
 }
 
 function recalculateProjectProgress(project) {
@@ -812,6 +934,7 @@ function saveProject(form) {
     const newProject = {
       id: createEntityId('project', title),
       progress: 0,
+      tasks: [],
       groups: [],
       ...data
     };
@@ -887,6 +1010,41 @@ function saveTask(form) {
   project.lastActivityDate = today;
 }
 
+function saveProjectTask(form) {
+  const formData = new FormData(form);
+  const project = findProject(form.dataset.projectId);
+  const taskId = form.dataset.taskId;
+  const title = String(formData.get('title') || '').trim();
+
+  if (!project || !title) return;
+
+  project.tasks = project.tasks || [];
+  const task = taskId ? findProjectTask(project, taskId) : null;
+  const safeDependsOn = getSelectedValues(form.elements.dependsOn).filter((dependencyId) => {
+    return dependencyId !== taskId && (!taskId || !hasDependencyPath(project, dependencyId, taskId));
+  });
+  const data = {
+    title,
+    status: formData.get('status') || 'planned',
+    weight: Number(formData.get('weight')) || 1,
+    note: String(formData.get('note') || '').trim(),
+    dependsOn: safeDependsOn,
+    lastActivityDate: getTodayIsoDate(),
+    blocked: false
+  };
+
+  if (task) {
+    Object.assign(task, data);
+  } else {
+    project.tasks.push({
+      id: createEntityId('task', title),
+      ...data
+    });
+  }
+
+  project.lastActivityDate = getTodayIsoDate();
+}
+
 function handleEntityFormSubmit(event) {
   const form = event.target.closest('.entity-form');
 
@@ -897,6 +1055,7 @@ function handleEntityFormSubmit(event) {
   if (form.dataset.formType === 'project') saveProject(form);
   if (form.dataset.formType === 'group') saveGroup(form);
   if (form.dataset.formType === 'task') saveTask(form);
+  if (form.dataset.formType === 'project-task') saveProjectTask(form);
 
   persistProjects();
   closeEntityModal();
@@ -905,7 +1064,7 @@ function handleEntityFormSubmit(event) {
 
 function deleteProject(projectId) {
   const project = findProject(projectId);
-  if (!project || !window.confirm(`Удалить проект «${project.title}» со всеми суммарными задачами и подзадачами?`)) return;
+  if (!project || !window.confirm(`Удалить проект «${project.title}» со всеми задачами, суммарными задачами и подзадачами?`)) return;
 
   projects = projects.filter((item) => item.id !== projectId);
   selectedProjectId = projects[0]?.id || null;
@@ -944,6 +1103,23 @@ function deleteTask(projectId, taskId) {
   });
   group.lastActivityDate = today;
   project.lastActivityDate = today;
+  recalculateProjectProgress(project);
+  persistProjects();
+  closeEntityModal();
+  renderAll(projects);
+}
+
+function deleteProjectTask(projectId, taskId) {
+  const project = findProject(projectId);
+  const task = findProjectTask(project, taskId);
+  if (!project || !task || !window.confirm(`Удалить задачу «${task.title}»?`)) return;
+
+  project.tasks = (project.tasks || []).filter((item) => item.id !== taskId);
+  getProjectTasks(project).forEach((item) => {
+    item.dependsOn = (item.dependsOn || []).filter((dependencyId) => dependencyId !== taskId);
+  });
+  project.lastActivityDate = getTodayIsoDate();
+  recalculateProjectProgress(project);
   persistProjects();
   closeEntityModal();
   renderAll(projects);
@@ -959,6 +1135,11 @@ function getStalledItemContext(type, projectId, itemId) {
   if (type === 'group') {
     const group = findGroup(project, itemId);
     return group ? { type, project, group, item: group } : null;
+  }
+
+  if (type === 'project-task') {
+    const task = findProjectTask(project, itemId);
+    return task ? { type, project, task, item: task } : null;
   }
 
   if (type === 'task') {
@@ -1056,6 +1237,9 @@ function setupEntityControls() {
       case 'create-group':
         openCreateGroupForm(projectId);
         break;
+      case 'create-project-task':
+        openCreateProjectTaskForm(projectId);
+        break;
       case 'edit-group':
         openEditGroupForm(projectId, groupId);
         break;
@@ -1068,8 +1252,14 @@ function setupEntityControls() {
       case 'edit-task':
         openEditTaskForm(projectId, taskId);
         break;
+      case 'edit-project-task':
+        openEditProjectTaskForm(projectId, taskId);
+        break;
       case 'delete-task':
         deleteTask(projectId, taskId);
+        break;
+      case 'delete-project-task':
+        deleteProjectTask(projectId, taskId);
         break;
       case 'open-stalled':
         openStalledItem(projectId);
@@ -1112,6 +1302,24 @@ function getStalledProjectEntries(project) {
   return getStalledItems([project]).filter((entry) => entry.type !== 'project');
 }
 
+function getFilteredProjectTasks(project, taskLookup, filter) {
+  const tasks = project.tasks || [];
+
+  if (filter === 'next') {
+    return tasks.filter((task) => isTaskAvailable(task, project, taskLookup));
+  }
+
+  if (filter === 'stalled') {
+    const stalledTasks = new Set(getStalledProjectEntries(project)
+      .filter((entry) => entry.type === 'project-task')
+      .map((entry) => entry.task.id));
+
+    return tasks.filter((task) => stalledTasks.has(task.id));
+  }
+
+  return tasks;
+}
+
 function getFilteredGroups(project, taskLookup, filter) {
   if (filter === 'next') {
     return (project.groups || []).map((group) => ({
@@ -1151,9 +1359,9 @@ function renderProjectFilterBar(activeFilter) {
 }
 
 function getProjectFilterEmptyText(filter) {
-  if (filter === 'next') return 'Нет доступных подзадач';
+  if (filter === 'next') return 'Нет доступных задач и подзадач';
   if (filter === 'stalled') return 'Нет зависших элементов';
-  return 'В проекте пока нет суммарных задач. Добавьте первую суммарную задачу.';
+  return 'В проекте пока нет задач и суммарных задач. Добавьте первую задачу или суммарную задачу.';
 }
 
 function getTaskCompletionStats(tasks) {
@@ -1164,6 +1372,10 @@ function getTaskCompletionStats(tasks) {
 }
 
 function renderCompletionText(stats) {
+  return `${stats.done} из ${stats.total} задач и подзадач`;
+}
+
+function renderSubtaskCompletionText(stats) {
   return `${stats.done} из ${stats.total} подзадач`;
 }
 
@@ -1186,7 +1398,11 @@ function renderSelectedProject(projects) {
   const taskLookup = createTaskLookup(projects);
   const completion = getTaskCompletionStats(getProjectTasks(project));
   const activeFilter = isProjectFilter(activeProjectFilter) ? activeProjectFilter : 'all';
+  const filteredProjectTasks = getFilteredProjectTasks(project, taskLookup, activeFilter);
   const filteredGroups = getFilteredGroups(project, taskLookup, activeFilter);
+  const projectTasksHtml = filteredProjectTasks.length
+    ? filteredProjectTasks.map((task) => renderProjectTask(task, taskLookup, project.id)).join('')
+    : `<div class="empty-section empty-section--compact">${escapeHtml(getProjectFilterEmptyText(activeFilter))}</div>`;
   const groupsHtml = filteredGroups.length
     ? filteredGroups.map((entry) => renderTaskGroup(entry.group, taskLookup, project.id, entry.tasks, { filter: activeFilter, isStalledGroup: entry.isStalledGroup })).join('')
     : `<div class="empty-section empty-section--compact">${escapeHtml(getProjectFilterEmptyText(activeFilter))}</div>`;
@@ -1211,6 +1427,7 @@ function renderSelectedProject(projects) {
       </div>
       <div class="project-workspace__actions">
         <button class="mini-button" type="button" data-action="edit-project" data-project-id="${escapeHtml(project.id)}">Редактировать</button>
+        <button class="primary-button" type="button" data-action="create-project-task" data-project-id="${escapeHtml(project.id)}">+ Задача</button>
         <button class="primary-button" type="button" data-action="create-group" data-project-id="${escapeHtml(project.id)}">+ Суммарная задача</button>
       </div>
     </article>
@@ -1219,7 +1436,19 @@ function renderSelectedProject(projects) {
 
     ${renderProjectFilterBar(activeFilter)}
 
+    <section class="project-workspace__project-tasks" aria-label="Список задач проекта">
+      <div class="project-section-heading">
+        <h3>Задачи</h3>
+      </div>
+      <div class="project-task-list" aria-label="Задачи проекта ${escapeHtml(project.title)}">
+        ${projectTasksHtml}
+      </div>
+    </section>
+
     <section class="project-workspace__groups" aria-label="Список суммарных задач проекта">
+      <div class="project-section-heading">
+        <h3>Суммарные задачи</h3>
+      </div>
       <div class="task-groups" aria-label="Суммарные задачи проекта ${escapeHtml(project.title)}">
         ${groupsHtml}
       </div>
@@ -1257,6 +1486,7 @@ function renderSelectedProject(projects) {
         if (group) group.lastActivityDate = today;
         project.lastActivityDate = today;
       }
+      recalculateProjectProgress(project);
       persistProjects();
       renderAll(projects);
     });
@@ -1279,7 +1509,7 @@ function renderTaskGroup(group, taskLookup, projectId, visibleTasks, options = {
         <button class="task-group__edit" type="button" data-action="edit-group" data-project-id="${escapeHtml(projectId)}" data-group-id="${escapeHtml(group.id)}" aria-label="Редактировать суммарную задачу">&#9998;</button>
       </div>
       <div class="task-group__meta-row">
-        <span class="task-group__stats">${progress}% · ${escapeHtml(renderCompletionText(completion))}</span>
+        <span class="task-group__stats">${progress}% · ${escapeHtml(renderSubtaskCompletionText(completion))}</span>
         <button class="add-task-button" type="button" data-action="create-task" data-project-id="${escapeHtml(projectId)}" data-group-id="${escapeHtml(group.id)}">+ Подзадача</button>
       </div>
       <div class="task-group__progress" aria-label="Прогресс суммарной задачи ${escapeHtml(group.title)}: ${progress}%">
@@ -1320,6 +1550,35 @@ function renderTask(task, taskLookup, projectId) {
   `;
 }
 
+function renderProjectTask(task, taskLookup, projectId) {
+  const isDone = task.status === 'done';
+  const isBlocked = isTaskBlocked(task, taskLookup);
+  const dependencyTitles = getDependencyTitles(task, taskLookup);
+  const dependencyText = dependencyTitles.join(', ');
+  const taskClasses = [
+    'task-item',
+    'project-task-item',
+    isDone ? 'task-item--done' : '',
+    isBlocked ? 'task-item--blocked' : ''
+  ].filter(Boolean).join(' ');
+
+  return `
+    <article class="${taskClasses}" ${isBlocked ? 'aria-disabled="true"' : ''}>
+      <div class="task-item__row">
+        <label class="task-item__main">
+          <input type="checkbox" data-task-id="${escapeHtml(task.id)}" ${isDone ? 'checked' : ''} ${isBlocked ? 'aria-describedby="task-depends-' + escapeHtml(task.id) + '"' : ''}>
+          <span>
+            <strong>${isBlocked ? '<span class="task-item__lock" aria-hidden="true">🔒</span>' : ''}${escapeHtml(task.title)}</strong>
+          </span>
+        </label>
+        <button class="task-item__edit" type="button" data-action="edit-project-task" data-project-id="${escapeHtml(projectId)}" data-task-id="${escapeHtml(task.id)}" aria-label="Редактировать задачу">&#9998;</button>
+      </div>
+      ${task.note ? `<p>${escapeHtml(task.note)}</p>` : ''}
+      ${dependencyText ? `<span class="task-item__depends" id="task-depends-${escapeHtml(task.id)}">${isBlocked ? 'Зависит от: ' : 'Зависимости: '}${escapeHtml(dependencyText)}</span>` : ''}
+    </article>
+  `;
+}
+
 function renderActionCard(action, options = {}) {
   const { task, group, project } = action;
   const isCompact = options.compact;
@@ -1328,7 +1587,7 @@ function renderActionCard(action, options = {}) {
     <article class="next-action-card ${isCompact ? 'next-action-card--compact' : ''}">
       <div class="next-action-card__main">
         <div>
-          <p class="eyebrow">${escapeHtml(project.title)} · ${escapeHtml(group.title)}</p>
+          <p class="eyebrow">${escapeHtml(project.title)} · ${group ? escapeHtml(group.title) : 'Задача'}</p>
           <h3>${escapeHtml(task.title)}</h3>
         </div>
         ${getStatusBadge(task.status)}
@@ -1339,8 +1598,8 @@ function renderActionCard(action, options = {}) {
           <dd>${escapeHtml(project.title)}</dd>
         </div>
         <div>
-          <dt>Суммарная задача</dt>
-          <dd>${escapeHtml(group.title)}</dd>
+          <dt>Тип</dt>
+          <dd>${group ? `Суммарная задача: ${escapeHtml(group.title)}` : 'Задача проекта'}</dd>
         </div>
         <div>
           <dt>Статус</dt>
@@ -1395,6 +1654,7 @@ function getStalledTypeLabel(type) {
   return {
     project: 'Проект',
     group: 'Суммарная задача',
+    'project-task': 'Задача',
     task: 'Подзадача'
   }[type] || 'Элемент';
 }
@@ -1465,7 +1725,14 @@ function renderStalledSection(projects) {
 
   renderList(projectsList, 'project', 'Нет зависших проектов: завершённые, замороженные и отменённые проекты не учитываются.', '#stalled-projects-list');
   renderList(groupsList, 'group', 'Нет зависших суммарных задач.', '#stalled-groups-list');
-  renderList(tasksList, 'task', 'Нет зависших подзадач.', '#stalled-tasks-list');
+  if (tasksList) {
+    const stalledTasks = items.filter((entry) => ['project-task', 'task'].includes(entry.type));
+    tasksList.innerHTML = stalledTasks.length
+      ? stalledTasks.map(renderStalledCard).join('')
+      : '<div class="empty-section empty-section--compact">Нет зависших задач и подзадач.</div>';
+  } else {
+    warnMissingElement('#stalled-tasks-list', 'Рендер раздела «Зависшие»');
+  }
 }
 
 function updateDashboardWidgets(projects) {

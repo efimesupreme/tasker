@@ -3251,3 +3251,66 @@ h1 {
     width: auto;
   }
 }
+
+/* Project-level tasks */
+.project-workspace__project-tasks {
+  display: grid;
+  gap: 9px;
+  margin-bottom: 10px;
+}
+
+.project-section-heading h3 {
+  margin: 0;
+  color: var(--muted);
+  font-size: 0.78rem;
+  font-weight: 900;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.project-task-list {
+  display: grid;
+  gap: 7px;
+}
+
+.project-task-item {
+  padding: 9px 11px;
+  background: rgba(21, 29, 40, 0.5);
+}
+
+.project-workspace__actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+}
+
+.project-workspace__actions .primary-button,
+.project-workspace__actions .mini-button {
+  min-height: 32px;
+  padding-inline: 12px;
+  font-size: 0.78rem;
+  white-space: nowrap;
+}
+
+@media (max-width: 640px) {
+  .project-workspace__project-tasks {
+    margin-bottom: 8px;
+  }
+
+  .project-workspace__actions .primary-button,
+  .project-workspace__actions .mini-button {
+    flex: 0 1 auto;
+    width: auto;
+    min-height: 29px;
+    padding-inline: 9px;
+    font-size: 0.72rem;
+  }
+}
+
+@media (max-width: 360px) {
+  .project-workspace__actions .primary-button,
+  .project-workspace__actions .mini-button {
+    padding-inline: 8px;
+    font-size: 0.68rem;
+  }
+}
