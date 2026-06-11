@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Проектный трекер</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <div class="app-shell">
+    <aside class="sidebar" aria-label="Основная навигация">
+      <div class="sidebar__brand">
+        <span class="brand-mark" aria-hidden="true">ПТ</span>
+        <div>
+          <p class="eyebrow">Рабочее пространство</p>
+          <h1>Проектный трекер</h1>
+        </div>
+      </div>
+
+      <nav class="menu">
+        <a class="menu__item menu__item--active" href="#dashboard">
+          <span class="menu__dot menu__dot--blue" aria-hidden="true"></span>
+          Панель
+        </a>
+        <a class="menu__item" href="#projects">
+          <span class="menu__dot menu__dot--green" aria-hidden="true"></span>
+          Проекты
+        </a>
+        <a class="menu__item" href="#next-actions">
+          <span class="menu__dot menu__dot--orange" aria-hidden="true"></span>
+          Следующие действия
+        </a>
+        <a class="menu__item" href="#stalled">
+          <span class="menu__dot menu__dot--red" aria-hidden="true"></span>
+          Зависшие
+        </a>
+        <a class="menu__item" href="#archive">
+          <span class="menu__dot" aria-hidden="true"></span>
+          Архив
+        </a>
+        <a class="menu__item" href="#settings">
+          <span class="menu__dot" aria-hidden="true"></span>
+          Настройки
+        </a>
+      </nav>
+
+      <div class="sidebar__footer">
+        <p>Демо-версия</p>
+        <span>Статический каркас для GitHub Pages</span>
+      </div>
+    </aside>
+
+    <main class="main-content" id="dashboard">
+      <header class="page-header">
+        <div>
+          <p class="eyebrow">Обзор</p>
+          <h2>Панель проектов</h2>
+        </div>
+        <button class="primary-button" type="button">+ Новый проект</button>
+      </header>
+
+      <section class="toolbar" aria-label="Инструменты панели">
+        <label class="search" for="project-search">
+          <span aria-hidden="true">⌕</span>
+          <input id="project-search" type="search" placeholder="Поиск по проектам" autocomplete="off">
+        </label>
+        <button class="ghost-button" type="button">Фильтры</button>
+      </section>
+
+      <section class="widgets" aria-label="Виджеты будущей аналитики">
+        <article class="widget widget--accent-blue">
+          <div class="widget__topline"></div>
+          <p class="widget__label">Активные проекты</p>
+          <strong class="widget__value" data-widget="active">—</strong>
+          <span class="widget__hint">Здесь появится количество активных проектов.</span>
+        </article>
+        <article class="widget widget--accent-green">
+          <div class="widget__topline"></div>
+          <p class="widget__label">Следующие действия</p>
+          <strong class="widget__value" data-widget="next">—</strong>
+          <span class="widget__hint">Место для ближайших шагов по проектам.</span>
+        </article>
+        <article class="widget widget--accent-orange">
+          <div class="widget__topline"></div>
+          <p class="widget__label">Требуют внимания</p>
+          <strong class="widget__value" data-widget="attention">—</strong>
+          <span class="widget__hint">Будущие сигналы о рисках и задержках.</span>
+        </article>
+        <article class="widget widget--accent-red">
+          <div class="widget__topline"></div>
+          <p class="widget__label">Зависшие</p>
+          <strong class="widget__value" data-widget="stalled">—</strong>
+          <span class="widget__hint">Список проектов без движения будет здесь.</span>
+        </article>
+      </section>
+
+      <section class="project-board" aria-labelledby="projects-title">
+        <div class="section-heading">
+          <div>
+            <p class="eyebrow">Демо-данные</p>
+            <h3 id="projects-title">Последние проекты</h3>
+          </div>
+          <span class="section-heading__note">Пока без сложной логики</span>
+        </div>
+        <div class="project-grid" id="project-list"></div>
+      </section>
+    </main>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>
