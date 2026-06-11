@@ -18,27 +18,27 @@
       </div>
 
       <nav class="menu">
-        <a class="menu__item menu__item--active" href="#dashboard">
+        <a class="menu__item menu__item--active" href="#dashboard" data-section-link="dashboard">
           <span class="menu__dot menu__dot--blue" aria-hidden="true"></span>
           Панель
         </a>
-        <a class="menu__item" href="#projects">
+        <a class="menu__item" href="#projects" data-section-link="dashboard">
           <span class="menu__dot menu__dot--green" aria-hidden="true"></span>
           Проекты
         </a>
-        <a class="menu__item" href="#next-actions">
+        <a class="menu__item" href="#next-actions" data-section-link="next-actions">
           <span class="menu__dot menu__dot--orange" aria-hidden="true"></span>
           Следующие действия
         </a>
-        <a class="menu__item" href="#stalled">
+        <a class="menu__item" href="#stalled" data-section-link="stalled">
           <span class="menu__dot menu__dot--red" aria-hidden="true"></span>
           Зависшие
         </a>
-        <a class="menu__item" href="#archive">
+        <a class="menu__item" href="#archive" data-section-link="archive">
           <span class="menu__dot" aria-hidden="true"></span>
           Архив
         </a>
-        <a class="menu__item" href="#settings">
+        <a class="menu__item" href="#settings" data-section-link="settings">
           <span class="menu__dot" aria-hidden="true"></span>
           Настройки
         </a>
@@ -50,7 +50,8 @@
       </div>
     </aside>
 
-    <main class="main-content" id="dashboard">
+    <main class="main-content">
+      <section class="app-section app-section--active" id="dashboard" data-section="dashboard">
       <header class="page-header">
         <div>
           <p class="eyebrow">Обзор</p>
@@ -94,26 +95,74 @@
         </article>
       </section>
 
-      <section class="project-board" aria-labelledby="projects-title">
-        <div class="section-heading">
-          <div>
-            <p class="eyebrow">Демо-данные</p>
-            <h3 id="projects-title">Крупные жизненные проекты</h3>
-          </div>
-          <span class="section-heading__note">Пока без сложной логики</span>
-        </div>
-        <div class="project-grid" id="project-list"></div>
-
-        <section class="project-map" aria-labelledby="selected-project-title">
-          <div class="section-heading section-heading--inner">
+      <div class="dashboard-layout">
+        <section class="project-board" aria-labelledby="projects-title">
+          <div class="section-heading">
             <div>
-              <p class="eyebrow">Карта проекта</p>
-              <h3 id="selected-project-title">Структура выбранного проекта</h3>
+              <p class="eyebrow">Демо-данные</p>
+              <h3 id="projects-title">Крупные жизненные проекты</h3>
             </div>
-            <span class="section-heading__note">Проект → группа задач → подзадачи</span>
+            <span class="section-heading__note">Пока без сложной логики</span>
           </div>
-          <div id="selected-project-details"></div>
+          <div class="project-grid" id="project-list"></div>
+
+          <section class="project-map" aria-labelledby="selected-project-title">
+            <div class="section-heading section-heading--inner">
+              <div>
+                <p class="eyebrow">Карта проекта</p>
+                <h3 id="selected-project-title">Структура выбранного проекта</h3>
+              </div>
+              <span class="section-heading__note">Проект → группа задач → подзадачи</span>
+            </div>
+            <div id="selected-project-details"></div>
+          </section>
         </section>
+
+        <aside class="next-actions-panel" aria-labelledby="next-actions-preview-title">
+          <div class="section-heading section-heading--compact">
+            <div>
+              <p class="eyebrow">Можно делать сейчас</p>
+              <h3 id="next-actions-preview-title">Ближайшие действия</h3>
+            </div>
+            <span class="section-heading__note">4</span>
+          </div>
+          <div class="next-actions-preview" id="next-actions-preview"></div>
+        </aside>
+      </div>
+      </section>
+
+      <section class="app-section" id="next-actions" data-section="next-actions" hidden>
+        <header class="page-header">
+          <div>
+            <p class="eyebrow">Фокус</p>
+            <h2>Следующие действия</h2>
+          </div>
+          <span class="page-header__counter" data-next-actions-count>—</span>
+        </header>
+
+        <section class="project-board" aria-labelledby="all-next-actions-title">
+          <div class="section-heading">
+            <div>
+              <p class="eyebrow">Автоматический список</p>
+              <h3 id="all-next-actions-title">Все доступные подзадачи</h3>
+            </div>
+            <span class="section-heading__note">Без редактирования и перетаскивания</span>
+          </div>
+          <div class="next-actions-list" id="next-actions-list"></div>
+        </section>
+      </section>
+
+      <section class="app-section" id="stalled" data-section="stalled" hidden>
+        <header class="page-header"><div><p class="eyebrow">Скоро</p><h2>Зависшие</h2></div></header>
+        <section class="empty-section">Раздел будет подключён позже.</section>
+      </section>
+      <section class="app-section" id="archive" data-section="archive" hidden>
+        <header class="page-header"><div><p class="eyebrow">Скоро</p><h2>Архив</h2></div></header>
+        <section class="empty-section">Раздел будет подключён позже.</section>
+      </section>
+      <section class="app-section" id="settings" data-section="settings" hidden>
+        <header class="page-header"><div><p class="eyebrow">Скоро</p><h2>Настройки</h2></div></header>
+        <section class="empty-section">Раздел будет подключён позже.</section>
       </section>
     </main>
   </div>
