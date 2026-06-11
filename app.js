@@ -418,7 +418,77 @@ function updateBlockedTaskNotice(message) {
 }
 
 function clampProgress(progress) {
-  return Math.min(Math.max(progress, 0), 100);
+  const value = Number(progress);
+
+  if (!Number.isFinite(value)) {
+    return 0;
+  }
+
+  return Math.min(Math.max(value, 0), 100);
+}
+
+function toProgressPercent(value) {
+  return Math.round(clampProgress(value));
+}
+
+function getProgressWeight(item) {
+  const weight = Number(item?.weight);
+
+  return Number.isFinite(weight) && weight > 0 ? weight : 0;
+}
+
+function getProgressWeights(items) {
+  const weights = items.map((item) => getProgressWeight(item));
+  const totalWeight = weights.reduce((sum, weight) => sum + weight, 0);
+
+  if (totalWeight > 0) {
+    return weights;
+  }
+
+  return items.map(() => 1);
+}
+
+function calculateWeightedProgress(items, getItemProgress) {
+  if (!items.length) {
+    return 0;
+  }
+
+  const weights = getProgressWeights(items);
+  const totalWeight = weights.reduce((sum, weight) => sum + weight, 0);
+
+  if (totalWeight === 0) {
+    return 0;
+  }
+
+  const progress = items.reduce((sum, item, index) => {
+    return sum + clampProgress(getItemProgress(item)) * weights[index];
+  }, 0) / totalWeight;
+
+  return toProgressPercent(progress);
+}
+
+function calculateTaskContribution(task) {
+  return task.status === 'done' ? 100 : 0;
+}
+
+function calculateGroupProgress(group) {
+  return calculateWeightedProgress(group.tasks || [], calculateTaskContribution);
+}
+
+function calculateProjectProgress(project) {
+  return calculateWeightedProgress(project.groups || [], calculateGroupProgress);
+}
+
+function recalculateProjectProgress(project) {
+  (project.groups || []).forEach((group) => {
+    group.progress = calculateGroupProgress(group);
+  });
+
+  project.progress = calculateProjectProgress(project);
+}
+
+function recalculateAllProgress(projects) {
+  projects.forEach(recalculateProjectProgress);
 }
 
 function getSelectedProject(projects) {
@@ -463,9 +533,10 @@ function setupSectionNavigation() {
 }
 
 function completeTask(taskId, projects) {
-  const task = createTaskLookup(projects).get(taskId);
+  const taskLookup = createTaskLookup(projects);
+  const task = taskLookup.get(taskId);
 
-  if (!task) {
+  if (!task || isTaskBlocked(task, taskLookup)) {
     return;
   }
 
@@ -743,6 +814,7 @@ function fillDemoWidgets(projects) {
 }
 
 function renderAll(projects) {
+  recalculateAllProgress(projects);
   renderProjectCards(projects);
   renderSelectedProject(projects);
   fillDemoWidgets(projects);
