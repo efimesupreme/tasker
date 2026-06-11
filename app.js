@@ -179,7 +179,7 @@ const demoProjects = [
             title: 'Заполнить заявку',
             status: 'planned',
             weight: 2,
-            dependsOn: ['granicon-short-pitch', 'granicon-prototype-photo'],
+            dependsOn: ['granicon-check-requirements', 'granicon-make-enp', 'granicon-short-pitch', 'granicon-prototype-photo'],
             lastActivityDate: '2026-06-01',
             note: 'Перенести готовые материалы в форму.',
             blocked: false
@@ -343,6 +343,53 @@ function getProjectTasks(project) {
   return project.groups.flatMap((group) => group.tasks || []);
 }
 
+function getAllTasks(projects) {
+  return projects.flatMap((project) => getProjectTasks(project));
+}
+
+function createTaskLookup(projects) {
+  return new Map(getAllTasks(projects).map((task) => [task.id, task]));
+}
+
+function getBlockingDependencies(task, taskLookup) {
+  return (task.dependsOn || [])
+    .map((dependencyId) => taskLookup.get(dependencyId))
+    .filter((dependency) => dependency && dependency.status !== 'done');
+}
+
+function isTaskBlocked(task, taskLookup) {
+  return task.status !== 'done' && getBlockingDependencies(task, taskLookup).length > 0;
+}
+
+function getDependencyTitles(task, taskLookup) {
+  return (task.dependsOn || []).map((dependencyId) => {
+    return taskLookup.get(dependencyId)?.title || dependencyId;
+  });
+}
+
+function renderTaskLockMessage(task, taskLookup) {
+  const blockingDependencies = getBlockingDependencies(task, taskLookup);
+  const titles = blockingDependencies.map((dependency) => dependency.title).join(', ');
+
+  return `Задача «${task.title}» заблокирована. Сначала завершите: ${titles}.`;
+}
+
+function updateBlockedTaskNotice(message) {
+  const notice = document.querySelector('#task-blocked-notice');
+
+  if (!notice) {
+    return;
+  }
+
+  notice.textContent = message;
+  notice.hidden = false;
+
+  window.clearTimeout(updateBlockedTaskNotice.timeoutId);
+  updateBlockedTaskNotice.timeoutId = window.setTimeout(() => {
+    notice.hidden = true;
+  }, 3600);
+}
+
 function clampProgress(progress) {
   return Math.min(Math.max(progress, 0), 100);
 }
@@ -417,6 +464,7 @@ function renderSelectedProject(projects) {
   const progress = clampProgress(project.progress);
   const totalGroups = project.groups.length;
   const totalTasks = getProjectTasks(project).length;
+  const taskLookup = createTaskLookup(projects);
 
   details.innerHTML = `
     <article class="project-map__hero">
@@ -452,13 +500,44 @@ function renderSelectedProject(projects) {
       </div>
     </article>
 
+    <div class="task-blocked-notice" id="task-blocked-notice" role="status" hidden></div>
+
     <div class="task-groups" aria-label="Группы задач проекта ${escapeHtml(project.title)}">
-      ${project.groups.map((group, index) => renderTaskGroup(group, index)).join('')}
+      ${project.groups.map((group, index) => renderTaskGroup(group, index, taskLookup)).join('')}
     </div>
   `;
+
+  details.querySelectorAll('[data-task-id]').forEach((checkbox) => {
+    checkbox.addEventListener('click', (event) => {
+      const task = taskLookup.get(checkbox.dataset.taskId);
+
+      if (task && isTaskBlocked(task, taskLookup)) {
+        event.preventDefault();
+        updateBlockedTaskNotice(renderTaskLockMessage(task, taskLookup));
+      }
+    });
+
+    checkbox.addEventListener('change', () => {
+      const task = taskLookup.get(checkbox.dataset.taskId);
+
+      if (!task) {
+        return;
+      }
+
+      if (isTaskBlocked(task, taskLookup)) {
+        checkbox.checked = false;
+        updateBlockedTaskNotice(renderTaskLockMessage(task, taskLookup));
+        return;
+      }
+
+      task.status = checkbox.checked ? 'done' : 'planned';
+      renderSelectedProject(projects);
+      fillDemoWidgets(projects);
+    });
+  });
 }
 
-function renderTaskGroup(group, index) {
+function renderTaskGroup(group, index, taskLookup) {
   const progress = clampProgress(group.progress);
   const tasks = group.tasks || [];
 
@@ -475,27 +554,34 @@ function renderTaskGroup(group, index) {
         <span style="width: ${progress}%;"></span>
       </div>
       <div class="task-list">
-        ${tasks.map((task) => renderTask(task)).join('')}
+        ${tasks.map((task) => renderTask(task, taskLookup)).join('')}
       </div>
     </details>
   `;
 }
 
-function renderTask(task) {
+function renderTask(task, taskLookup) {
   const isDone = task.status === 'done';
-  const dependsOn = task.dependsOn?.length ? task.dependsOn.join(', ') : 'нет';
+  const isBlocked = isTaskBlocked(task, taskLookup);
+  const dependencyTitles = getDependencyTitles(task, taskLookup);
+  const dependsOn = dependencyTitles.length ? dependencyTitles.join(', ') : 'нет';
+  const taskClasses = [
+    'task-item',
+    isDone ? 'task-item--done' : '',
+    isBlocked ? 'task-item--blocked' : ''
+  ].filter(Boolean).join(' ');
 
   return `
-    <article class="task-item ${isDone ? 'task-item--done' : ''}">
+    <article class="${taskClasses}" ${isBlocked ? 'aria-disabled="true"' : ''}>
       <label class="task-item__main">
-        <input type="checkbox" ${isDone ? 'checked' : ''} disabled>
+        <input type="checkbox" data-task-id="${escapeHtml(task.id)}" ${isDone ? 'checked' : ''} ${isBlocked ? 'aria-describedby="task-depends-' + escapeHtml(task.id) + '"' : ''}>
         <span>
-          <strong>${escapeHtml(task.title)}</strong>
+          <strong>${isBlocked ? '<span class="task-item__lock" aria-hidden="true">🔒</span>' : ''}${escapeHtml(task.title)}</strong>
           <small>${getStatusMeta(task.status).label} · вес ${escapeHtml(task.weight)} · активность ${formatDate(task.lastActivityDate)}</small>
         </span>
       </label>
       <p>${escapeHtml(task.note)}</p>
-      <span class="task-item__depends">Зависит от: ${escapeHtml(dependsOn)}</span>
+      ${isBlocked ? `<span class="task-item__depends" id="task-depends-${escapeHtml(task.id)}">Зависит от: ${escapeHtml(dependsOn)}</span>` : ''}
     </article>
   `;
 }
@@ -508,9 +594,8 @@ function fillDemoWidgets(projects) {
 
   const activeProjects = projects.filter((project) => project.status === 'active').length;
   const availableActions = projects.filter((project) => project.nextAction && !['done', 'cancelled', 'frozen'].includes(project.status)).length;
-  const blockedTasks = projects.reduce((total, project) => {
-    return total + getProjectTasks(project).filter((task) => task.blocked).length;
-  }, 0);
+  const taskLookup = createTaskLookup(projects);
+  const blockedTasks = getAllTasks(projects).filter((task) => isTaskBlocked(task, taskLookup)).length;
   const inactiveProjects = projects.filter((project) => getDaysSince(project.lastActivityDate) >= 14).length;
 
   if (active) active.textContent = activeProjects;
