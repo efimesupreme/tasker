@@ -541,6 +541,9 @@ function renderGroupForm(projectId, group = {}) {
 function renderTaskForm(projectId, groupId, task = {}) {
   const project = findProject(projectId);
   const dependsOn = task.dependsOn || [];
+  const deleteButton = task.id
+    ? `<button class="mini-button mini-button--danger entity-form__delete" type="button" data-action="delete-task" data-project-id="${escapeHtml(projectId)}" data-task-id="${escapeHtml(task.id)}">Удалить подзадачу</button>`
+    : '';
 
   return `
     <form class="entity-form" data-form-type="task" data-project-id="${escapeHtml(projectId)}" data-group-id="${escapeHtml(groupId)}" data-task-id="${escapeHtml(task.id || '')}">
@@ -554,9 +557,12 @@ function renderTaskForm(projectId, groupId, task = {}) {
         </select>
         <span class="entity-form__hint">Можно выбрать несколько задач этого проекта. Сама задача и очевидные циклы недоступны.</span>
       </label>
-      <div class="entity-form__actions">
-        <button class="ghost-button" type="button" data-modal-close>Отмена</button>
-        <button class="primary-button" type="submit">Сохранить</button>
+      <div class="entity-form__actions entity-form__actions--split">
+        <div class="entity-form__danger">${deleteButton}</div>
+        <div class="entity-form__save-actions">
+          <button class="ghost-button" type="button" data-modal-close>Отмена</button>
+          <button class="primary-button" type="submit">Сохранить</button>
+        </div>
       </div>
     </form>
   `;
@@ -1066,12 +1072,15 @@ function deleteTask(projectId, taskId) {
   const task = findTask(project, taskId);
   if (!project || !group || !task || !window.confirm(`Удалить подзадачу «${task.title}»?`)) return;
 
+  const today = getTodayIsoDate();
   group.tasks = (group.tasks || []).filter((item) => item.id !== taskId);
   getProjectTasks(project).forEach((item) => {
     item.dependsOn = (item.dependsOn || []).filter((dependencyId) => dependencyId !== taskId);
   });
-  project.lastActivityDate = getTodayIsoDate();
+  group.lastActivityDate = today;
+  project.lastActivityDate = today;
   persistProjects();
+  closeEntityModal();
   renderAll(projects);
 }
 
@@ -1352,7 +1361,7 @@ function renderSelectedProject(projects) {
     </section>
   `;
 
-  details.querySelectorAll('[data-task-id]').forEach((checkbox) => {
+  details.querySelectorAll('input[type="checkbox"][data-task-id]').forEach((checkbox) => {
     checkbox.addEventListener('click', (event) => {
       const task = taskLookup.get(checkbox.dataset.taskId);
 
@@ -1435,19 +1444,17 @@ function renderTask(task, taskLookup, projectId) {
 
   return `
     <article class="${taskClasses}" ${isBlocked ? 'aria-disabled="true"' : ''}>
-      <label class="task-item__main">
-        <input type="checkbox" data-task-id="${escapeHtml(task.id)}" ${isDone ? 'checked' : ''} ${isBlocked ? 'aria-describedby="task-depends-' + escapeHtml(task.id) + '"' : ''}>
-        <span>
-          <strong>${isBlocked ? '<span class="task-item__lock" aria-hidden="true">🔒</span>' : ''}${escapeHtml(task.title)}</strong>
-          <small>${escapeHtml(getStatusMeta(task.status).label)}</small>
-        </span>
-      </label>
+      <div class="task-item__row">
+        <label class="task-item__main">
+          <input type="checkbox" data-task-id="${escapeHtml(task.id)}" ${isDone ? 'checked' : ''} ${isBlocked ? 'aria-describedby="task-depends-' + escapeHtml(task.id) + '"' : ''}>
+          <span>
+            <strong>${isBlocked ? '<span class="task-item__lock" aria-hidden="true">🔒</span>' : ''}${escapeHtml(task.title)}</strong>
+          </span>
+        </label>
+        <button class="task-item__edit" type="button" data-action="edit-task" data-project-id="${escapeHtml(projectId)}" data-task-id="${escapeHtml(task.id)}" aria-label="Редактировать подзадачу">✎</button>
+      </div>
       ${task.note ? `<p>${escapeHtml(task.note)}</p>` : ''}
       ${dependencyText ? `<span class="task-item__depends" id="task-depends-${escapeHtml(task.id)}">${isBlocked ? 'Зависит от: ' : 'Зависимости: '}${escapeHtml(dependencyText)}</span>` : ''}
-      <div class="entity-actions entity-actions--task">
-        <button class="mini-button" type="button" data-action="edit-task" data-project-id="${escapeHtml(projectId)}" data-task-id="${escapeHtml(task.id)}">Редактировать</button>
-        <button class="mini-button mini-button--danger" type="button" data-action="delete-task" data-project-id="${escapeHtml(projectId)}" data-task-id="${escapeHtml(task.id)}">Удалить</button>
-      </div>
     </article>
   `;
 }
