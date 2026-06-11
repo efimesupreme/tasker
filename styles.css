@@ -997,12 +997,15 @@ h1 {
   margin-bottom: 14px;
 }
 
-.task-group__summary-actions {
-  display: flex;
+.task-group__summary-status {
+  display: inline-flex;
   align-items: center;
-  flex-wrap: wrap;
-  gap: 8px;
   justify-content: flex-end;
+}
+
+.task-group__actions {
+  justify-content: flex-end;
+  padding: 0 20px 14px;
 }
 
 .stalled-intro {
@@ -1271,7 +1274,7 @@ h1 {
     align-items: stretch;
   }
 
-  .task-group__summary-actions,
+  .task-group__actions,
   .entity-actions--task {
     margin-left: 0;
     justify-content: flex-start;
@@ -1538,7 +1541,7 @@ summary:focus-visible {
     display: none;
   }
 
-  .task-group__summary-actions,
+  .task-group__actions,
   .entity-actions,
   .stalled-card__actions {
     width: 100%;
@@ -1603,7 +1606,7 @@ summary:focus-visible {
   }
 
   .entity-actions,
-  .task-group__summary-actions,
+  .task-group__actions,
   .stalled-card__actions {
     display: grid;
     grid-template-columns: 1fr;
