@@ -143,25 +143,6 @@ h1 {
 .menu__dot--orange { background: var(--orange); }
 .menu__dot--red { background: var(--red); }
 
-.sidebar__footer {
-  margin-top: auto;
-  padding: 16px;
-  border: 1px solid var(--border);
-  border-radius: var(--radius-md);
-  background: rgba(21, 29, 40, 0.72);
-}
-
-.sidebar__footer p {
-  margin-bottom: 6px;
-  font-weight: 700;
-}
-
-.sidebar__footer span {
-  color: var(--muted);
-  font-size: 0.9rem;
-  line-height: 1.5;
-}
-
 .main-content {
   width: min(1180px, 100%);
   margin: 0 auto;
@@ -1438,10 +1419,6 @@ summary:focus-visible {
     min-height: 44px;
     padding: 11px 14px;
     white-space: nowrap;
-  }
-
-  .sidebar__footer {
-    margin-top: 0;
   }
 
   .main-content {
