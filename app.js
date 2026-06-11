@@ -384,6 +384,10 @@ function escapeHtml(value) {
     .replaceAll("'", '&#039;');
 }
 
+function warnMissingElement(selector, context) {
+  console.warn(`Не найден DOM-элемент ${selector}. ${context} пропущен.`);
+}
+
 
 function getTodayIsoDate() {
   return new Date().toISOString().slice(0, 10);
@@ -484,6 +488,7 @@ function openEntityModal(title, formHtml) {
   const content = document.querySelector('#entity-modal-content');
 
   if (!modal || !content) {
+    warnMissingElement(!modal ? '#entity-modal' : '#entity-modal-content', 'Открытие модального окна');
     return;
   }
 
@@ -1077,6 +1082,8 @@ function setupEntityControls() {
   document.addEventListener('click', (event) => {
     const closeButton = event.target.closest('[data-modal-close]');
     if (closeButton) {
+      event.preventDefault();
+      event.stopPropagation();
       closeEntityModal();
       return;
     }
@@ -1089,19 +1096,49 @@ function setupEntityControls() {
 
     const { action, projectId, groupId, taskId, itemType, itemId } = actionButton.dataset;
 
-    if (action === 'create-project') openCreateProjectForm();
-    if (action === 'edit-project') openEditProjectForm(projectId);
-    if (action === 'delete-project') deleteProject(projectId);
-    if (action === 'create-group') openCreateGroupForm(projectId);
-    if (action === 'edit-group') openEditGroupForm(projectId, groupId);
-    if (action === 'delete-group') deleteGroup(projectId, groupId);
-    if (action === 'create-task') openCreateTaskForm(projectId, groupId);
-    if (action === 'edit-task') openEditTaskForm(projectId, taskId);
-    if (action === 'delete-task') deleteTask(projectId, taskId);
-    if (action === 'open-stalled') openStalledItem(projectId);
-    if (action === 'freeze-stalled') freezeStalledItem(itemType, projectId, itemId);
-    if (action === 'cancel-stalled') cancelStalledItem(itemType, projectId, itemId);
-    if (action === 'touch-stalled') markStalledItemMovement(itemType, projectId, itemId);
+    switch (action) {
+      case 'create-project':
+        openCreateProjectForm();
+        break;
+      case 'edit-project':
+        openEditProjectForm(projectId);
+        break;
+      case 'delete-project':
+        deleteProject(projectId);
+        break;
+      case 'create-group':
+        openCreateGroupForm(projectId);
+        break;
+      case 'edit-group':
+        openEditGroupForm(projectId, groupId);
+        break;
+      case 'delete-group':
+        deleteGroup(projectId, groupId);
+        break;
+      case 'create-task':
+        openCreateTaskForm(projectId, groupId);
+        break;
+      case 'edit-task':
+        openEditTaskForm(projectId, taskId);
+        break;
+      case 'delete-task':
+        deleteTask(projectId, taskId);
+        break;
+      case 'open-stalled':
+        openStalledItem(projectId);
+        break;
+      case 'freeze-stalled':
+        freezeStalledItem(itemType, projectId, itemId);
+        break;
+      case 'cancel-stalled':
+        cancelStalledItem(itemType, projectId, itemId);
+        break;
+      case 'touch-stalled':
+        markStalledItemMovement(itemType, projectId, itemId);
+        break;
+      default:
+        console.warn(`Неизвестное действие: ${action}`);
+    }
   });
 
   document.addEventListener('submit', handleEntityFormSubmit);
@@ -1114,6 +1151,7 @@ function renderProjectCards(projects) {
   const list = document.querySelector('#project-list');
 
   if (!list) {
+    warnMissingElement('#project-list', 'Рендер списка проектов');
     return;
   }
 
@@ -1152,7 +1190,7 @@ function renderProjectCards(projects) {
     `;
   }).join('');
 
-  list.querySelectorAll('[data-project-id]').forEach((button) => {
+  list.querySelectorAll('.project-card__select').forEach((button) => {
     button.addEventListener('click', () => {
       selectedProjectId = button.dataset.projectId;
       renderProjectCards(projects);
@@ -1165,6 +1203,7 @@ function renderSelectedProject(projects) {
   const details = document.querySelector('#selected-project-details');
 
   if (!details) {
+    warnMissingElement('#selected-project-details', 'Рендер выбранного проекта');
     return;
   }
 
@@ -1277,12 +1316,12 @@ function renderTaskGroup(group, index, taskLookup, projectId) {
           <span class="task-group__title">${escapeHtml(group.title)}</span>
           <span class="task-group__stats">Вес ${escapeHtml(group.weight)} · ${tasks.length} задач · ${progress}% · активность ${formatDate(group.lastActivityDate)}</span>
         </span>
-        <span class="task-group__summary-actions">
-          ${getStatusBadge(group.status)}
-          <button class="mini-button" type="button" data-action="edit-group" data-project-id="${escapeHtml(projectId)}" data-group-id="${escapeHtml(group.id)}">Редактировать</button>
-          <button class="mini-button mini-button--danger" type="button" data-action="delete-group" data-project-id="${escapeHtml(projectId)}" data-group-id="${escapeHtml(group.id)}">Удалить</button>
-        </span>
+        <span class="task-group__summary-status">${getStatusBadge(group.status)}</span>
       </summary>
+      <div class="entity-actions task-group__actions">
+        <button class="mini-button" type="button" data-action="edit-group" data-project-id="${escapeHtml(projectId)}" data-group-id="${escapeHtml(group.id)}">Редактировать</button>
+        <button class="mini-button mini-button--danger" type="button" data-action="delete-group" data-project-id="${escapeHtml(projectId)}" data-group-id="${escapeHtml(group.id)}">Удалить</button>
+      </div>
       <div class="task-group__progress" aria-label="Прогресс группы ${escapeHtml(group.title)}: ${progress}%">
         <span style="width: ${progress}%;"></span>
       </div>
@@ -1380,6 +1419,8 @@ function renderNextActions(projects) {
     list.innerHTML = actions.length
       ? actions.map((action) => renderActionCard(action)).join('')
       : '<div class="empty-section">Сейчас нет доступных подзадач без незавершённых предшественников.</div>';
+  } else {
+    warnMissingElement('#next-actions-list', 'Рендер списка следующих действий');
   }
 
   if (preview) {
@@ -1387,6 +1428,8 @@ function renderNextActions(projects) {
     preview.innerHTML = shortList.length
       ? shortList.map((action) => renderActionCard(action, { compact: true })).join('')
       : '<div class="empty-section empty-section--compact">Нет действий для правой колонки.</div>';
+  } else {
+    warnMissingElement('#next-actions-preview', 'Рендер превью следующих действий');
   }
 
   bindCompleteTaskButtons(projects);
@@ -1454,17 +1497,20 @@ function renderStalledSection(projects) {
 
   if (counter) counter.textContent = items.length;
 
-  const renderList = (list, type, emptyText) => {
-    if (!list) return;
+  const renderList = (list, type, emptyText, selector) => {
+    if (!list) {
+      warnMissingElement(selector, 'Рендер раздела «Зависшие»');
+      return;
+    }
     const filtered = items.filter((entry) => entry.type === type);
     list.innerHTML = filtered.length
       ? filtered.map(renderStalledCard).join('')
       : `<div class="empty-section empty-section--compact">${escapeHtml(emptyText)}</div>`;
   };
 
-  renderList(projectsList, 'project', 'Нет зависших проектов: завершённые, замороженные и отменённые проекты не учитываются.');
-  renderList(groupsList, 'group', 'Нет зависших групп задач.');
-  renderList(tasksList, 'task', 'Нет зависших подзадач.');
+  renderList(projectsList, 'project', 'Нет зависших проектов: завершённые, замороженные и отменённые проекты не учитываются.', '#stalled-projects-list');
+  renderList(groupsList, 'group', 'Нет зависших групп задач.', '#stalled-groups-list');
+  renderList(tasksList, 'task', 'Нет зависших подзадач.', '#stalled-tasks-list');
 }
 
 function updateDashboardWidgets(projects) {
