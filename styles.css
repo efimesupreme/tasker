@@ -1741,3 +1741,171 @@ summary:focus-visible {
     margin-inline: 12px;
   }
 }
+
+.project-workspace__hero {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 18px;
+  margin-bottom: 14px;
+  padding: 22px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  background: linear-gradient(180deg, rgba(21, 29, 40, 0.96), rgba(17, 23, 32, 0.96));
+  box-shadow: var(--shadow);
+}
+
+.project-workspace__main {
+  display: grid;
+  gap: 12px;
+  min-width: 0;
+}
+
+.project-workspace__title-row,
+.project-workspace__progress-line,
+.task-group__header,
+.task-group__header-actions {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 14px;
+}
+
+.project-workspace__title-row h2 {
+  margin: 0;
+  font-size: clamp(1.8rem, 4vw, 3rem);
+  letter-spacing: -0.06em;
+  line-height: 1.02;
+}
+
+.project-workspace__description,
+.project-workspace__completion {
+  margin: 0;
+  color: var(--muted);
+  line-height: 1.5;
+}
+
+.project-workspace__progress-line {
+  align-items: baseline;
+}
+
+.project-workspace__progress-line span {
+  color: var(--muted);
+  font-size: 0.78rem;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.project-workspace__progress-line strong {
+  font-size: 1.55rem;
+  letter-spacing: -0.04em;
+}
+
+.project-workspace__actions {
+  display: flex;
+  align-items: flex-end;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.project-workspace__actions .primary-button,
+.project-workspace__actions .mini-button {
+  width: 100%;
+  white-space: nowrap;
+}
+
+.project-workspace__quick-links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-bottom: 18px;
+}
+
+.project-workspace__groups {
+  display: grid;
+  gap: 14px;
+}
+
+.section-heading--project {
+  margin-bottom: 4px;
+}
+
+.task-group--card {
+  display: grid;
+  gap: 14px;
+  padding: 18px 20px 20px;
+}
+
+.task-group__header {
+  align-items: center;
+}
+
+.task-group__header-actions {
+  align-items: center;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
+
+.task-group--card .task-group__actions {
+  padding: 0;
+  justify-content: flex-end;
+}
+
+.task-group--card .task-group__progress {
+  margin: 0;
+}
+
+.task-group--card .task-list {
+  padding: 0;
+}
+
+@media (max-width: 760px) {
+  .project-workspace__hero,
+  .task-group__header {
+    grid-template-columns: 1fr;
+  }
+
+  .project-workspace__hero {
+    padding: 18px;
+  }
+
+  .project-workspace__hero,
+  .project-workspace__title-row,
+  .project-workspace__progress-line,
+  .task-group__header,
+  .task-group__header-actions {
+    display: flex;
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .project-workspace__actions,
+  .task-group__header-actions,
+  .task-group--card .task-group__actions {
+    align-items: stretch;
+  }
+
+  .project-workspace__quick-links .mini-button,
+  .task-group__actions .mini-button,
+  .task-group__actions .add-task-button,
+  .entity-actions--task .mini-button {
+    min-height: 42px;
+  }
+
+  .project-workspace__quick-links,
+  .entity-actions--task {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .entity-actions--task,
+  .task-item p,
+  .task-item__depends {
+    margin-left: 0;
+  }
+
+  .task-item__main input {
+    width: 22px;
+    height: 22px;
+  }
+}
