@@ -564,12 +564,12 @@ function openEditProjectForm(projectId) {
 }
 
 function openCreateGroupForm(projectId) {
-  openEntityModal('Новая группа задач', renderGroupForm(projectId));
+  openEntityModal('Новая крупная задача', renderGroupForm(projectId));
 }
 
 function openEditGroupForm(projectId, groupId) {
   const group = findGroup(findProject(projectId), groupId);
-  if (group) openEntityModal('Редактирование группы задач', renderGroupForm(projectId, group));
+  if (group) openEntityModal('Редактирование крупной задачи', renderGroupForm(projectId, group));
 }
 
 function openCreateTaskForm(projectId, groupId) {
@@ -798,8 +798,60 @@ function recalculateAllProgress(projects) {
   projects.forEach(recalculateProjectProgress);
 }
 
+function ensureSelectedProject(projects) {
+  if (!projects.length) {
+    selectedProjectId = null;
+    return null;
+  }
+
+  if (!projects.some((project) => project.id === selectedProjectId)) {
+    selectedProjectId = projects[0].id;
+  }
+
+  return selectedProjectId;
+}
+
 function getSelectedProject(projects) {
-  return projects.find((project) => project.id === selectedProjectId) || projects[0];
+  const selectedId = ensureSelectedProject(projects);
+  return projects.find((project) => project.id === selectedId) || null;
+}
+
+function renderProjectTabs(projects) {
+  const tabs = document.querySelector('#project-tabs');
+
+  if (!tabs) {
+    warnMissingElement('#project-tabs', 'Рендер верхнего меню проектов');
+    return;
+  }
+
+  ensureSelectedProject(projects);
+
+  const projectButtons = projects.map((project) => {
+    const isSelected = project.id === selectedProjectId;
+
+    return `
+      <button class="menu__item project-tabs__item ${isSelected ? 'menu__item--active' : ''}" type="button" data-project-tab-id="${escapeHtml(project.id)}" aria-pressed="${isSelected}" title="${escapeHtml(project.title)}">
+        <span class="project-tabs__title">${escapeHtml(project.title)}</span>
+      </button>
+    `;
+  }).join('');
+
+  tabs.innerHTML = `
+    ${projectButtons}
+    <button class="menu__item project-tabs__item project-tabs__item--create" type="button" data-action="create-project">+ Новый проект</button>
+    <button class="menu__item project-tabs__settings" type="button" data-section-link="settings" aria-label="Настройки" title="Настройки">⚙</button>
+  `;
+}
+
+function selectProject(projectId) {
+  if (!findProject(projectId)) return;
+
+  selectedProjectId = projectId;
+  window.location.hash = 'dashboard';
+  setActiveSection('dashboard');
+  renderProjectTabs(projects);
+  renderProjectCards(projects);
+  renderSelectedProject(projects);
 }
 
 function getStatusBadge(statusValue) {
@@ -826,13 +878,15 @@ function setActiveSection(sectionId) {
 }
 
 function setupSectionNavigation() {
-  document.querySelectorAll('[data-section-link]').forEach((link) => {
-    link.addEventListener('click', (event) => {
-      event.preventDefault();
-      const sectionId = link.dataset.sectionLink || 'dashboard';
-      window.location.hash = sectionId;
-      setActiveSection(sectionId);
-    });
+  document.addEventListener('click', (event) => {
+    const link = event.target.closest('[data-section-link]');
+
+    if (!link) return;
+
+    event.preventDefault();
+    const sectionId = link.dataset.sectionLink || 'dashboard';
+    window.location.hash = sectionId;
+    setActiveSection(sectionId);
   });
 
   const initialSection = window.location.hash.replace('#', '') || activeSectionId;
@@ -975,10 +1029,12 @@ function handleEntityFormSubmit(event) {
 
 function deleteProject(projectId) {
   const project = findProject(projectId);
-  if (!project || !window.confirm(`Удалить проект «${project.title}» со всеми группами и подзадачами?`)) return;
+  if (!project || !window.confirm(`Удалить проект «${project.title}» со всеми крупными задачами и подзадачами?`)) return;
 
   projects = projects.filter((item) => item.id !== projectId);
-  selectedProjectId = projects[0]?.id || null;
+  if (selectedProjectId === projectId || !projects.some((item) => item.id === selectedProjectId)) {
+    selectedProjectId = projects[0]?.id || null;
+  }
   persistProjects();
   renderAll(projects);
 }
@@ -986,7 +1042,7 @@ function deleteProject(projectId) {
 function deleteGroup(projectId, groupId) {
   const project = findProject(projectId);
   const group = findGroup(project, groupId);
-  if (!project || !group || !window.confirm(`Удалить группу «${group.title}» со всеми подзадачами?`)) return;
+  if (!project || !group || !window.confirm(`Удалить крупную задачу «${group.title}» со всеми подзадачами?`)) return;
 
   const removedTaskIds = new Set((group.tasks || []).map((task) => task.id));
   project.groups = project.groups.filter((item) => item.id !== groupId);
@@ -1045,11 +1101,7 @@ function markStalledParentsActivity(context, today) {
 }
 
 function openStalledItem(projectId) {
-  selectedProjectId = projectId;
-  window.location.hash = 'dashboard';
-  setActiveSection('dashboard');
-  renderProjectCards(projects);
-  renderSelectedProject(projects);
+  selectProject(projectId);
   document.querySelector('#selected-project-details')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
 }
 
@@ -1085,6 +1137,13 @@ function setupEntityControls() {
       event.preventDefault();
       event.stopPropagation();
       closeEntityModal();
+      return;
+    }
+
+    const projectTab = event.target.closest('[data-project-tab-id]');
+    if (projectTab) {
+      event.preventDefault();
+      selectProject(projectTab.dataset.projectTabId);
       return;
     }
 
@@ -1192,9 +1251,7 @@ function renderProjectCards(projects) {
 
   list.querySelectorAll('.project-card__select').forEach((button) => {
     button.addEventListener('click', () => {
-      selectedProjectId = button.dataset.projectId;
-      renderProjectCards(projects);
-      renderSelectedProject(projects);
+      selectProject(button.dataset.projectId);
     });
   });
 }
@@ -1234,7 +1291,7 @@ function renderSelectedProject(projects) {
         <p>${escapeHtml(project.description)}</p>
         <dl class="project-map__meta">
           <div>
-            <dt>Группы задач</dt>
+            <dt>Крупные задачи</dt>
             <dd>${totalGroups}</dd>
           </div>
           <div>
@@ -1260,11 +1317,11 @@ function renderSelectedProject(projects) {
     <div class="task-blocked-notice" id="task-blocked-notice" role="status" hidden></div>
 
     <div class="project-map__toolbar">
-      <button class="primary-button" type="button" data-action="create-group" data-project-id="${escapeHtml(project.id)}">+ Новая группа</button>
+      <button class="primary-button" type="button" data-action="create-group" data-project-id="${escapeHtml(project.id)}">+ Крупная задача</button>
     </div>
 
-    <div class="task-groups" aria-label="Группы задач проекта ${escapeHtml(project.title)}">
-      ${project.groups.length ? project.groups.map((group, index) => renderTaskGroup(group, index, taskLookup, project.id)).join('') : '<div class="empty-section empty-section--compact">В проекте пока нет групп задач.</div>'}
+    <div class="task-groups" aria-label="Крупные задачи проекта ${escapeHtml(project.title)}">
+      ${project.groups.length ? project.groups.map((group, index) => renderTaskGroup(group, index, taskLookup, project.id)).join('') : '<div class="empty-section empty-section--compact">В проекте пока нет крупных задач.</div>'}
     </div>
   `;
 
@@ -1322,12 +1379,12 @@ function renderTaskGroup(group, index, taskLookup, projectId) {
         <button class="mini-button" type="button" data-action="edit-group" data-project-id="${escapeHtml(projectId)}" data-group-id="${escapeHtml(group.id)}">Редактировать</button>
         <button class="mini-button mini-button--danger" type="button" data-action="delete-group" data-project-id="${escapeHtml(projectId)}" data-group-id="${escapeHtml(group.id)}">Удалить</button>
       </div>
-      <div class="task-group__progress" aria-label="Прогресс группы ${escapeHtml(group.title)}: ${progress}%">
+      <div class="task-group__progress" aria-label="Прогресс крупной задачи ${escapeHtml(group.title)}: ${progress}%">
         <span style="width: ${progress}%;"></span>
       </div>
       <div class="task-list">
         <button class="add-task-button" type="button" data-action="create-task" data-project-id="${escapeHtml(projectId)}" data-group-id="${escapeHtml(group.id)}">+ Добавить подзадачу</button>
-        ${tasks.length ? tasks.map((task) => renderTask(task, taskLookup, projectId)).join('') : '<div class="empty-section empty-section--compact">В группе пока нет подзадач.</div>'}
+        ${tasks.length ? tasks.map((task) => renderTask(task, taskLookup, projectId)).join('') : '<div class="empty-section empty-section--compact">В крупной задаче пока нет подзадач.</div>'}
       </div>
     </details>
   `;
@@ -1382,7 +1439,7 @@ function renderActionCard(action, options = {}) {
           <dd>${escapeHtml(project.title)}</dd>
         </div>
         <div>
-          <dt>Группа</dt>
+          <dt>Крупная задача</dt>
           <dd>${escapeHtml(group.title)}</dd>
         </div>
         <div>
@@ -1439,7 +1496,7 @@ function renderNextActions(projects) {
 function getStalledTypeLabel(type) {
   return {
     project: 'Проект',
-    group: 'Группа задач',
+    group: 'Крупная задача',
     task: 'Подзадача'
   }[type] || 'Элемент';
 }
@@ -1509,7 +1566,7 @@ function renderStalledSection(projects) {
   };
 
   renderList(projectsList, 'project', 'Нет зависших проектов: завершённые, замороженные и отменённые проекты не учитываются.', '#stalled-projects-list');
-  renderList(groupsList, 'group', 'Нет зависших групп задач.', '#stalled-groups-list');
+  renderList(groupsList, 'group', 'Нет зависших крупных задач.', '#stalled-groups-list');
   renderList(tasksList, 'task', 'Нет зависших подзадач.', '#stalled-tasks-list');
 }
 
@@ -1533,6 +1590,7 @@ function updateDashboardWidgets(projects) {
 
 function renderAll(projects) {
   recalculateAllProgress(projects);
+  renderProjectTabs(projects);
   renderProjectCards(projects);
   renderSelectedProject(projects);
   updateDashboardWidgets(projects);

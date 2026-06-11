@@ -47,28 +47,28 @@ button {
 }
 
 .app-shell {
-  display: grid;
-  grid-template-columns: 280px minmax(0, 1fr);
   min-height: 100vh;
 }
 
-.sidebar {
+.topbar {
   position: sticky;
   top: 0;
-  display: flex;
-  flex-direction: column;
-  gap: 32px;
-  height: 100vh;
-  padding: 28px 22px;
+  z-index: 20;
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: center;
+  gap: 18px;
+  padding: 14px 24px;
   background: rgba(19, 26, 37, 0.94);
-  border-right: 1px solid var(--border);
+  border-bottom: 1px solid var(--border);
   backdrop-filter: blur(18px);
 }
 
-.sidebar__brand {
+.topbar__brand {
   display: flex;
   align-items: center;
   gap: 14px;
+  min-width: 0;
 }
 
 .brand-mark {
@@ -108,20 +108,45 @@ h1 {
 }
 
 .menu {
-  display: grid;
+  display: flex;
+  align-items: center;
   gap: 8px;
 }
 
+.project-tabs {
+  min-width: 0;
+  overflow-x: auto;
+  overflow-y: hidden;
+  padding: 4px 2px 8px;
+  scrollbar-width: thin;
+  scrollbar-color: var(--border) transparent;
+}
+
+.project-tabs::-webkit-scrollbar {
+  height: 6px;
+}
+
+.project-tabs::-webkit-scrollbar-thumb {
+  border-radius: 999px;
+  background: var(--border);
+}
+
 .menu__item {
-  display: flex;
+  display: inline-flex;
   align-items: center;
+  justify-content: center;
+  flex: 0 0 auto;
+  min-height: 42px;
+  max-width: 220px;
   gap: 12px;
-  padding: 12px 14px;
+  padding: 0 14px;
   border: 1px solid transparent;
-  border-radius: var(--radius-sm);
+  border-radius: 999px;
+  background: transparent;
   color: var(--muted);
   text-decoration: none;
   transition: 180ms ease;
+  white-space: nowrap;
 }
 
 .menu__item:hover,
@@ -131,17 +156,25 @@ h1 {
   color: var(--text);
 }
 
-.menu__dot {
-  width: 9px;
-  height: 9px;
-  border-radius: 999px;
-  background: var(--muted);
+.project-tabs__title {
+  display: block;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
-.menu__dot--blue { background: var(--blue); }
-.menu__dot--green { background: var(--green); }
-.menu__dot--orange { background: var(--orange); }
-.menu__dot--red { background: var(--red); }
+.project-tabs__item--create {
+  border-color: rgba(61, 220, 151, 0.36);
+  background: rgba(61, 220, 151, 0.1);
+  color: #d0ffe9;
+}
+
+.project-tabs__settings {
+  width: 42px;
+  padding: 0;
+  font-size: 1.05rem;
+}
 
 .main-content {
   width: min(1180px, 100%);
@@ -388,17 +421,14 @@ h1 {
 }
 
 @media (max-width: 980px) {
-  .app-shell {
+  .topbar {
     grid-template-columns: 1fr;
+    gap: 12px;
+    padding: 12px 16px;
   }
 
-  .sidebar {
-    position: static;
-    height: auto;
-  }
-
-  .menu {
-    grid-template-columns: repeat(3, minmax(0, 1fr));
+  .topbar__brand .eyebrow {
+    display: none;
   }
 
   .main-content {
@@ -412,11 +442,39 @@ h1 {
 }
 
 @media (max-width: 640px) {
-  .sidebar {
-    padding: 22px 16px;
+  .topbar {
+    gap: 10px;
+    padding: 10px 12px 8px;
   }
 
-  .menu,
+  .brand-mark {
+    flex-basis: 40px;
+    width: 40px;
+    height: 40px;
+    border-radius: 13px;
+  }
+
+  .topbar__brand h1 {
+    font-size: 1rem;
+  }
+
+  .project-tabs {
+    margin-inline: -2px;
+    padding-bottom: 6px;
+  }
+
+  .menu__item {
+    min-height: 38px;
+    max-width: 168px;
+    padding: 0 12px;
+    font-size: 0.92rem;
+  }
+
+  .project-tabs__settings {
+    width: 38px;
+    padding: 0;
+  }
+
   .widgets,
   .project-grid {
     grid-template-columns: 1fr;
@@ -781,6 +839,58 @@ h1 {
   display: none;
 }
 
+.quick-links {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px;
+  margin-bottom: 24px;
+}
+
+.quick-link-card {
+  display: grid;
+  gap: 7px;
+  min-height: 112px;
+  padding: 18px;
+  border: 1px solid rgba(79, 140, 255, 0.34);
+  border-radius: var(--radius-lg);
+  background: linear-gradient(135deg, rgba(79, 140, 255, 0.14), rgba(21, 29, 40, 0.96));
+  color: var(--text);
+  text-align: left;
+  box-shadow: var(--shadow);
+}
+
+.quick-link-card--stalled {
+  border-color: rgba(255, 176, 82, 0.34);
+  background: linear-gradient(135deg, rgba(255, 176, 82, 0.12), rgba(21, 29, 40, 0.96));
+}
+
+.quick-link-card:hover {
+  transform: translateY(-1px);
+  border-color: rgba(134, 234, 255, 0.62);
+}
+
+.quick-link-card:focus-visible {
+  outline: 0;
+  box-shadow: var(--focus-ring), var(--shadow);
+}
+
+.quick-link-card__label {
+  color: var(--muted);
+  font-size: 0.76rem;
+  font-weight: 850;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.quick-link-card strong {
+  font-size: 1.08rem;
+}
+
+.quick-link-card small {
+  color: var(--muted);
+  line-height: 1.45;
+}
+
 .dashboard-layout {
   display: grid;
   grid-template-columns: minmax(0, 1fr) 340px;
@@ -922,6 +1032,7 @@ h1 {
 }
 
 @media (max-width: 780px) {
+  .quick-links,
   .next-actions-list {
     grid-template-columns: 1fr;
   }
@@ -1367,31 +1478,19 @@ summary:focus-visible {
     display: block;
   }
 
-  .sidebar {
-    position: sticky;
-    top: 0;
-    z-index: 20;
-    gap: 14px;
-    max-height: 164px;
-    padding: 14px 16px 12px;
-    overflow: hidden;
-    border-right: 0;
-    border-bottom: 1px solid var(--border);
+  .topbar {
+    grid-template-columns: 1fr;
+    gap: 10px;
+    padding: 10px 16px 8px;
     box-shadow: 0 14px 36px rgba(0, 0, 0, 0.34);
   }
 
-  .sidebar:focus-within,
-  .sidebar:hover {
-    max-height: 82vh;
-    overflow-y: auto;
-  }
-
-  .sidebar__brand {
+  .topbar__brand {
     min-width: 0;
   }
 
-  .sidebar__brand h1,
-  .sidebar__brand .eyebrow {
+  .topbar__brand h1,
+  .topbar__brand .eyebrow {
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
@@ -1404,21 +1503,21 @@ summary:focus-visible {
     border-radius: 13px;
   }
 
-  .menu {
-    display: flex;
-    gap: 8px;
+  .project-tabs {
     margin: 0 -16px;
-    padding: 0 16px 8px;
-    overflow-x: auto;
+    padding: 0 16px 6px;
     overscroll-behavior-inline: contain;
-    scrollbar-width: thin;
   }
 
   .menu__item {
-    flex: 0 0 auto;
-    min-height: 44px;
-    padding: 11px 14px;
-    white-space: nowrap;
+    min-height: 40px;
+    max-width: 174px;
+    padding: 0 13px;
+  }
+
+  .project-tabs__settings {
+    width: 40px;
+    padding: 0;
   }
 
   .main-content {
@@ -1464,6 +1563,7 @@ summary:focus-visible {
   .project-grid,
   .project-map__hero,
   .project-map__meta,
+  .quick-links,
   .next-actions-list,
   .stalled-list,
   .stalled-card__meta {
@@ -1615,11 +1715,11 @@ summary:focus-visible {
 }
 
 @media (max-width: 400px) {
-  .sidebar {
+  .topbar {
     padding-inline: 12px;
   }
 
-  .menu {
+  .project-tabs {
     margin-inline: -12px;
     padding-inline: 12px;
   }
