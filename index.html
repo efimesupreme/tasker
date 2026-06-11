@@ -8,8 +8,8 @@
 </head>
 <body>
   <div class="app-shell">
-    <aside class="sidebar" aria-label="Основная навигация">
-      <div class="sidebar__brand">
+    <header class="topbar" aria-label="Проекты и настройки">
+      <div class="topbar__brand">
         <span class="brand-mark" aria-hidden="true">ПТ</span>
         <div>
           <p class="eyebrow">Рабочее пространство</p>
@@ -17,34 +17,8 @@
         </div>
       </div>
 
-      <nav class="menu">
-        <a class="menu__item menu__item--active" href="#dashboard" data-section-link="dashboard">
-          <span class="menu__dot menu__dot--blue" aria-hidden="true"></span>
-          Панель
-        </a>
-        <a class="menu__item" href="#projects" data-section-link="dashboard">
-          <span class="menu__dot menu__dot--green" aria-hidden="true"></span>
-          Проекты
-        </a>
-        <a class="menu__item" href="#next-actions" data-section-link="next-actions">
-          <span class="menu__dot menu__dot--orange" aria-hidden="true"></span>
-          Следующие действия
-        </a>
-        <a class="menu__item" href="#stalled" data-section-link="stalled">
-          <span class="menu__dot menu__dot--red" aria-hidden="true"></span>
-          Зависшие
-        </a>
-        <a class="menu__item" href="#archive" data-section-link="archive">
-          <span class="menu__dot" aria-hidden="true"></span>
-          Архив
-        </a>
-        <a class="menu__item" href="#settings" data-section-link="settings">
-          <span class="menu__dot" aria-hidden="true"></span>
-          Настройки
-        </a>
-      </nav>
-
-    </aside>
+      <nav class="menu project-tabs" id="project-tabs" aria-label="Проекты"></nav>
+    </header>
 
     <main class="main-content">
       <section class="app-section app-section--active" id="dashboard" data-section="dashboard">
@@ -87,8 +61,21 @@
           <div class="widget__topline"></div>
           <p class="widget__label">Без движения 14+ дней</p>
           <strong class="widget__value" data-widget="stalled">—</strong>
-          <span class="widget__hint">Проекты, группы и подзадачи, где не было движения 14+ дней.</span>
+          <span class="widget__hint">Проекты, крупные задачи и подзадачи, где не было движения 14+ дней.</span>
         </article>
+      </section>
+
+      <section class="quick-links" aria-label="Быстрые переходы">
+        <button class="quick-link-card" type="button" data-section-link="next-actions">
+          <span class="quick-link-card__label">Фокус</span>
+          <strong>Все следующие действия</strong>
+          <small>Открыть общий список доступных подзадач.</small>
+        </button>
+        <button class="quick-link-card quick-link-card--stalled" type="button" data-section-link="stalled">
+          <span class="quick-link-card__label">Ревизия</span>
+          <strong>Зависшие</strong>
+          <small>Проверить проекты, крупные задачи и подзадачи без движения.</small>
+        </button>
       </section>
 
       <div class="dashboard-layout">
@@ -108,7 +95,7 @@
                 <p class="eyebrow">Карта проекта</p>
                 <h3 id="selected-project-title">Структура выбранного проекта</h3>
               </div>
-              <span class="section-heading__note">Проект → группа задач → подзадачи</span>
+              <span class="section-heading__note">Проект → крупная задача → подзадачи</span>
             </div>
             <div id="selected-project-details"></div>
           </section>
@@ -158,7 +145,7 @@
         </header>
 
         <section class="stalled-intro" aria-label="Правила зависших элементов">
-          <p>Здесь собраны незавершённые проекты, группы задач и подзадачи без движения 14+ дней.</p>
+          <p>Здесь собраны незавершённые проекты, крупные задачи и подзадачи без движения 14+ дней.</p>
           <span>Замороженные, отменённые и завершённые элементы не попадают в список и не удаляются автоматически.</span>
         </section>
 
@@ -177,10 +164,10 @@
           <section class="project-board" aria-labelledby="stalled-groups-title">
             <div class="section-heading">
               <div>
-                <p class="eyebrow">Уровень группы</p>
-                <h3 id="stalled-groups-title">Зависшие группы задач</h3>
+                <p class="eyebrow">Уровень крупной задачи</p>
+                <h3 id="stalled-groups-title">Зависшие крупные задачи</h3>
               </div>
-              <span class="section-heading__note">Группы внутри активных проектов</span>
+              <span class="section-heading__note">Крупные задачи внутри активных проектов</span>
             </div>
             <div class="stalled-list" id="stalled-groups-list"></div>
           </section>
