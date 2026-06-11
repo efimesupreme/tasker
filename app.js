@@ -1,283 +1,139 @@
 const demoProjects = [
   {
-    id: 'career',
-    title: 'Карьера',
-    description: 'Долгосрочный рост роли, навыков, портфолио и профессиональных связей.',
+    id: 'sample-project',
+    title: 'Пример проекта',
+    description: 'Нейтральный пример, который показывает структуру проекта, суммарные задачи, подзадачи и зависимости.',
     status: 'active',
-    progress: 62,
-    lastActivityDate: '2026-06-09',
-    nextAction: 'Обновить карту компетенций и выбрать один навык для фокуса на июнь.',
+    progress: 0,
+    lastActivityDate: '2026-06-11',
+    nextAction: 'Выбрать одну доступную подзадачу и продвинуть её до следующего результата.',
     groups: [
       {
-        id: 'career-growth',
-        title: 'Рост и позиционирование',
+        id: 'sample-structure',
+        title: 'Собрать структуру проекта',
         status: 'active',
-        weight: 4,
-        progress: 50,
-        lastActivityDate: '2026-06-09',
+        weight: 1,
+        progress: 0,
+        lastActivityDate: '2026-06-11',
         tasks: [
           {
-            id: 'career-skills-map',
-            title: 'Карта компетенций',
+            id: 'sample-goal',
+            title: 'Сформулировать цель проекта',
             status: 'done',
-            weight: 2,
-            dependsOn: [],
-            lastActivityDate: '2026-06-08',
-            note: 'Базовая версия карты собрана.',
-            blocked: false
-          },
-          {
-            id: 'career-portfolio',
-            title: 'Портфолио кейсов',
-            status: 'planned',
-            weight: 2,
-            dependsOn: ['career-skills-map'],
-            lastActivityDate: '2026-06-09',
-            note: 'Выбрать 2–3 сильных кейса для первого прохода.',
-            blocked: false
-          }
-        ]
-      }
-    ]
-  },
-  {
-    id: 'renovation',
-    title: 'Ремонт',
-    description: 'Большой бытовой проект: планирование комнат, подрядчики, закупки и контроль сроков.',
-    status: 'waiting',
-    progress: 34,
-    lastActivityDate: '2026-05-20',
-    nextAction: 'Дождаться сметы от электрика и согласовать перечень материалов.',
-    groups: [
-      {
-        id: 'renovation-contractors',
-        title: 'Подрядчики',
-        status: 'waiting',
-        weight: 5,
-        progress: 34,
-        lastActivityDate: '2026-05-20',
-        tasks: [
-          {
-            id: 'renovation-electrician-estimate',
-            title: 'Смета электрика',
-            status: 'waiting',
-            weight: 3,
-            dependsOn: [],
-            lastActivityDate: '2026-05-20',
-            note: 'Ожидается ответ подрядчика.',
-            blocked: true
-          },
-          {
-            id: 'renovation-paint-samples',
-            title: 'Выбрать образцы краски',
-            status: 'planned',
-            weight: 2,
-            dependsOn: ['renovation-electrician-estimate'],
-            lastActivityDate: '2026-05-18',
-            note: 'Можно сделать после уточнения бюджета.',
-            blocked: false
-          }
-        ]
-      }
-    ]
-  },
-  {
-    id: 'galaxy-heroes',
-    title: 'Герои Галактики',
-    description: 'Творческий проект по миру, героям, сюжетным аркам и выпуску первой истории.',
-    status: 'active',
-    progress: 18,
-    lastActivityDate: '2026-06-01',
-    nextAction: 'Собрать список главных героев и описать мотивацию антагониста.',
-    groups: [
-      {
-        id: 'galaxy-worldbuilding',
-        title: 'Мир и персонажи',
-        status: 'planned',
-        weight: 3,
-        progress: 25,
-        lastActivityDate: '2026-06-01',
-        tasks: [
-          {
-            id: 'galaxy-characters',
-            title: 'Список героев',
-            status: 'planned',
-            weight: 2,
-            dependsOn: [],
-            lastActivityDate: '2026-06-01',
-            note: 'Собрать имена, роли и короткие арки.',
-            blocked: false
-          },
-          {
-            id: 'galaxy-antagonist',
-            title: 'Антагонист',
-            status: 'idea',
             weight: 1,
-            dependsOn: ['galaxy-characters'],
-            lastActivityDate: '2026-05-30',
-            note: 'Черновик мотивации без финальной формулировки.',
+            dependsOn: [],
+            lastActivityDate: '2026-06-11',
+            note: 'Коротко описать, зачем нужен проект и какой результат считается успешным.',
+            blocked: false
+          },
+          {
+            id: 'sample-breakdown',
+            title: 'Разбить проект на суммарные задачи',
+            status: 'done',
+            weight: 1,
+            dependsOn: [],
+            lastActivityDate: '2026-06-11',
+            note: 'Выделить крупные направления работы, чтобы видеть общую структуру.',
+            blocked: false
+          },
+          {
+            id: 'sample-first-tasks',
+            title: 'Добавить первые подзадачи',
+            status: 'active',
+            weight: 1,
+            dependsOn: [],
+            lastActivityDate: '2026-06-11',
+            note: 'Записать конкретные шаги внутри каждой суммарной задачи.',
             blocked: false
           }
         ]
       },
       {
-        id: 'galaxy-granicon-application',
-        title: 'Податься на Граникон',
+        id: 'sample-result',
+        title: 'Подготовить первый результат',
         status: 'active',
-        weight: 5,
-        progress: 20,
-        lastActivityDate: '2026-06-03',
+        weight: 1,
+        progress: 0,
+        lastActivityDate: '2026-06-11',
         tasks: [
           {
-            id: 'granicon-check-requirements',
-            title: 'Проверить требования участия',
+            id: 'sample-materials',
+            title: 'Собрать исходные материалы',
             status: 'done',
             weight: 1,
             dependsOn: [],
-            lastActivityDate: '2026-06-02',
-            note: 'Зафиксировать формат заявки, дедлайн и ограничения.',
+            lastActivityDate: '2026-06-11',
+            note: 'Собрать файлы, ссылки, заметки и всё, что нужно для первого результата.',
             blocked: false
           },
           {
-            id: 'granicon-make-enp',
-            title: 'Сделать ENP',
+            id: 'sample-draft',
+            title: 'Сделать черновик результата',
             status: 'active',
-            weight: 2,
-            dependsOn: ['granicon-check-requirements'],
-            lastActivityDate: '2026-06-03',
-            note: 'Подготовить англоязычное описание проекта для заявки.',
+            weight: 1,
+            dependsOn: [],
+            lastActivityDate: '2026-06-11',
+            note: 'Подготовить рабочую версию результата без финальной полировки.',
             blocked: false
           },
           {
-            id: 'granicon-rules-2',
-            title: 'Обновить правила до версии 2.0',
-            status: 'planned',
-            weight: 3,
-            dependsOn: ['granicon-check-requirements'],
-            lastActivityDate: '2026-06-01',
-            note: 'Не менять прогресс автоматически: статус задан вручную.',
-            blocked: false
-          },
-          {
-            id: 'granicon-short-pitch',
-            title: 'Подготовить краткую презентацию игры',
-            status: 'planned',
-            weight: 2,
-            dependsOn: ['granicon-make-enp', 'granicon-rules-2'],
-            lastActivityDate: '2026-06-01',
-            note: 'Сделать короткую структуру: суть, аудитория, уникальность.',
-            blocked: false
-          },
-          {
-            id: 'granicon-prototype-photo',
-            title: 'Сделать фото прототипа',
+            id: 'sample-review',
+            title: 'Проверить и доработать результат',
             status: 'planned',
             weight: 1,
-            dependsOn: ['granicon-rules-2'],
-            lastActivityDate: '2026-06-01',
-            note: 'Нужны 2–3 понятные фотографии для формы.',
+            dependsOn: ['sample-draft'],
+            lastActivityDate: '2026-06-11',
+            note: 'Эта подзадача станет доступна после завершения черновика.',
             blocked: false
           },
           {
-            id: 'granicon-fill-application',
-            title: 'Заполнить заявку',
-            status: 'planned',
-            weight: 2,
-            dependsOn: ['granicon-check-requirements', 'granicon-make-enp', 'granicon-short-pitch', 'granicon-prototype-photo'],
-            lastActivityDate: '2026-06-01',
-            note: 'Перенести готовые материалы в форму.',
-            blocked: false
-          },
-          {
-            id: 'granicon-send-application',
-            title: 'Отправить заявку',
+            id: 'sample-next-step',
+            title: 'Зафиксировать следующий шаг',
             status: 'planned',
             weight: 1,
-            dependsOn: ['granicon-fill-application'],
-            lastActivityDate: '2026-06-01',
-            note: 'Финальный шаг после ручной проверки всех полей.',
+            dependsOn: ['sample-review'],
+            lastActivityDate: '2026-06-11',
+            note: 'Определить, что делать после проверки и доработки результата.',
             blocked: false
           }
         ]
-      }
-    ]
-  },
-  {
-    id: 'aurelia-18',
-    title: 'Аурелия-18',
-    description: 'Исследовательская инициатива с гипотезами, заметками и отдельным журналом решений.',
-    status: 'frozen',
-    progress: 9,
-    lastActivityDate: '2026-04-28',
-    nextAction: 'Решить, размораживать проект в этом квартале или перенести в архив ожидания.',
-    groups: [
+      },
       {
-        id: 'aurelia-research',
-        title: 'Исследование',
-        status: 'frozen',
-        weight: 4,
-        progress: 9,
-        lastActivityDate: '2026-04-28',
+        id: 'sample-maintenance',
+        title: 'Поддерживать движение',
+        status: 'planned',
+        weight: 1,
+        progress: 0,
+        lastActivityDate: '2026-06-11',
         tasks: [
           {
-            id: 'aurelia-hypotheses',
-            title: 'Проверить гипотезы',
-            status: 'frozen',
-            weight: 3,
-            dependsOn: [],
-            lastActivityDate: '2026-04-28',
-            note: 'Работа остановлена до решения о разморозке.',
-            blocked: true
-          },
-          {
-            id: 'aurelia-log',
-            title: 'Журнал решений',
+            id: 'sample-today-task',
+            title: 'Выбрать одну задачу на сегодня',
             status: 'planned',
             weight: 1,
-            dependsOn: ['aurelia-hypotheses'],
-            lastActivityDate: '2026-04-25',
-            note: 'Подготовить шаблон записей.',
-            blocked: false
-          }
-        ]
-      }
-    ]
-  },
-  {
-    id: 'book-fin-accounting',
-    title: 'БухФинУчёт',
-    description: 'Система личного бухгалтерского, финансового и налогового учёта без лишней сложности.',
-    status: 'active',
-    progress: 47,
-    lastActivityDate: '2026-06-10',
-    nextAction: 'Разобрать входящие операции за неделю и отметить повторяющиеся платежи.',
-    groups: [
-      {
-        id: 'book-fin-routines',
-        title: 'Регулярный учёт',
-        status: 'active',
-        weight: 4,
-        progress: 47,
-        lastActivityDate: '2026-06-10',
-        tasks: [
-          {
-            id: 'book-fin-inbox',
-            title: 'Разбор операций',
-            status: 'active',
-            weight: 3,
             dependsOn: [],
-            lastActivityDate: '2026-06-10',
-            note: 'Разобрать новые операции за неделю.',
+            lastActivityDate: '2026-06-11',
+            note: 'Сфокусироваться на одном понятном следующем действии.',
             blocked: false
           },
           {
-            id: 'book-fin-tax-folder',
-            title: 'Папка налоговых документов',
+            id: 'sample-mark-done',
+            title: 'Отметить выполненное',
             status: 'planned',
             weight: 1,
-            dependsOn: ['book-fin-inbox'],
-            lastActivityDate: '2026-06-07',
-            note: 'Собрать документы в отдельную структуру.',
+            dependsOn: ['sample-today-task'],
+            lastActivityDate: '2026-06-11',
+            note: 'Эта подзадача показывает зависимость от выбора задачи на сегодня.',
+            blocked: false
+          },
+          {
+            id: 'sample-check-stalled',
+            title: 'Проверить зависшие задачи',
+            status: 'planned',
+            weight: 1,
+            dependsOn: [],
+            lastActivityDate: '2026-06-11',
+            note: 'Просмотреть элементы без движения и решить, что с ними делать.',
             blocked: false
           }
         ]
@@ -286,12 +142,12 @@ const demoProjects = [
   }
 ];
 
-const STORAGE_KEY = 'tasker.projects.v1';
+const STORAGE_KEY = 'tasker.projects.v2';
 const STALLED_DAYS_THRESHOLD = 14;
 const NON_STALLED_STATUSES = ['done', 'cancelled', 'frozen'];
 
 let projects = loadProjects();
-let selectedProjectId = projects.some((project) => project.id === 'galaxy-heroes') ? 'galaxy-heroes' : projects[0]?.id || null;
+let selectedProjectId = projects.some((project) => project.id === 'sample-project') ? 'sample-project' : projects[0]?.id || null;
 let activeSectionId = 'dashboard';
 let activeProjectFilter = 'all';
 

@@ -38,7 +38,7 @@ python3 -m http.server 8000
 Данные хранятся локально в браузере в `localStorage` под ключом:
 
 ```text
-tasker.projects.v1
+tasker.projects.v2
 ```
 
 Это значит, что данные:
@@ -48,7 +48,7 @@ tasker.projects.v1
 - не синхронизируются между браузерами и устройствами;
 - могут быть очищены вместе с данными сайта в настройках браузера.
 
-При первом запуске или при отсутствии сохранённых данных приложение показывает демо-проекты из `app.js`.
+При первом запуске приложение показывает один универсальный пример проекта с суммарными задачами, подзадачами и зависимостями.
 
 ## Как сделать резервную копию
 
@@ -58,7 +58,7 @@ tasker.projects.v1
 4. Выполните команду:
 
 ```js
-copy(localStorage.getItem('tasker.projects.v1'))
+copy(localStorage.getItem('tasker.projects.v2'))
 ```
 
 5. Вставьте скопированный JSON в файл, например `tasker-backup.json`, и сохраните его в надёжном месте.
@@ -66,7 +66,7 @@ copy(localStorage.getItem('tasker.projects.v1'))
 Если команда `copy` недоступна в вашем браузере, выполните:
 
 ```js
-localStorage.getItem('tasker.projects.v1')
+localStorage.getItem('tasker.projects.v2')
 ```
 
 Затем вручную скопируйте выведенную строку.
@@ -79,7 +79,7 @@ localStorage.getItem('tasker.projects.v1')
 4. Выполните команду, заменив `PASTE_BACKUP_JSON_HERE` содержимым резервной копии:
 
 ```js
-localStorage.setItem('tasker.projects.v1', JSON.stringify(JSON.parse(`PASTE_BACKUP_JSON_HERE`)))
+localStorage.setItem('tasker.projects.v2', JSON.stringify(JSON.parse(`PASTE_BACKUP_JSON_HERE`)))
 location.reload()
 ```
 
@@ -87,7 +87,7 @@ location.reload()
 
 ```js
 const backup = `PASTE_BACKUP_JSON_HERE`
-localStorage.setItem('tasker.projects.v1', JSON.stringify(JSON.parse(backup)))
+localStorage.setItem('tasker.projects.v2', JSON.stringify(JSON.parse(backup)))
 location.reload()
 ```
 
