@@ -83,7 +83,7 @@ const demoProjects = [
     id: 'galaxy-heroes',
     title: 'Герои Галактики',
     description: 'Творческий проект по миру, героям, сюжетным аркам и выпуску первой истории.',
-    status: 'planned',
+    status: 'active',
     progress: 18,
     lastActivityDate: '2026-06-01',
     nextAction: 'Собрать список главных героев и описать мотивацию антагониста.',
@@ -281,6 +281,7 @@ const demoProjects = [
 ];
 
 let selectedProjectId = 'galaxy-heroes';
+let activeSectionId = 'dashboard';
 
 const projectStatuses = {
   idea: { label: 'Идея', accent: 'violet' },
@@ -361,6 +362,32 @@ function isTaskBlocked(task, taskLookup) {
   return task.status !== 'done' && getBlockingDependencies(task, taskLookup).length > 0;
 }
 
+function isProjectActionSource(project) {
+  return ['active', 'waiting'].includes(project.status);
+}
+
+function isTaskAvailable(task, project, taskLookup) {
+  return task.status !== 'done'
+    && !['frozen', 'cancelled'].includes(task.status)
+    && !task.blocked
+    && isProjectActionSource(project)
+    && getBlockingDependencies(task, taskLookup).length === 0;
+}
+
+function getAvailableActions(projects) {
+  const taskLookup = createTaskLookup(projects);
+
+  return projects.flatMap((project) => {
+    return project.groups.flatMap((group) => {
+      return (group.tasks || [])
+        .filter((task) => isTaskAvailable(task, project, taskLookup))
+        .map((task) => ({ task, group, project }));
+    });
+  }).sort((first, second) => {
+    return new Date(second.task.lastActivityDate) - new Date(first.task.lastActivityDate);
+  });
+}
+
 function getDependencyTitles(task, taskLookup) {
   return (task.dependsOn || []).map((dependencyId) => {
     return taskLookup.get(dependencyId)?.title || dependencyId;
@@ -404,6 +431,47 @@ function getStatusBadge(statusValue) {
   const color = statusTextColors[status.accent] || statusTextColors.blue;
 
   return `<span class="project-card__status" style="background: ${background}; color: ${color};">${escapeHtml(status.label)}</span>`;
+}
+
+function setActiveSection(sectionId) {
+  const target = document.querySelector(`[data-section="${sectionId}"]`) ? sectionId : 'dashboard';
+  activeSectionId = target;
+
+  document.querySelectorAll('[data-section]').forEach((section) => {
+    const isActive = section.dataset.section === target;
+    section.hidden = !isActive;
+    section.classList.toggle('app-section--active', isActive);
+  });
+
+  document.querySelectorAll('[data-section-link]').forEach((link) => {
+    link.classList.toggle('menu__item--active', link.dataset.sectionLink === target && link.getAttribute('href') === `#${target}`);
+  });
+}
+
+function setupSectionNavigation() {
+  document.querySelectorAll('[data-section-link]').forEach((link) => {
+    link.addEventListener('click', (event) => {
+      event.preventDefault();
+      const sectionId = link.dataset.sectionLink || 'dashboard';
+      window.location.hash = sectionId;
+      setActiveSection(sectionId);
+    });
+  });
+
+  const initialSection = window.location.hash.replace('#', '') || activeSectionId;
+  setActiveSection(initialSection);
+}
+
+function completeTask(taskId, projects) {
+  const task = createTaskLookup(projects).get(taskId);
+
+  if (!task) {
+    return;
+  }
+
+  task.status = 'done';
+  task.lastActivityDate = new Date().toISOString().slice(0, 10);
+  renderAll(projects);
 }
 
 function renderProjectCards(projects) {
@@ -531,8 +599,10 @@ function renderSelectedProject(projects) {
       }
 
       task.status = checkbox.checked ? 'done' : 'planned';
-      renderSelectedProject(projects);
-      fillDemoWidgets(projects);
+      if (checkbox.checked) {
+        task.lastActivityDate = new Date().toISOString().slice(0, 10);
+      }
+      renderAll(projects);
     });
   });
 }
@@ -586,6 +656,74 @@ function renderTask(task, taskLookup) {
   `;
 }
 
+function renderActionCard(action, options = {}) {
+  const { task, group, project } = action;
+  const isCompact = options.compact;
+
+  return `
+    <article class="next-action-card ${isCompact ? 'next-action-card--compact' : ''}">
+      <div class="next-action-card__main">
+        <div>
+          <p class="eyebrow">${escapeHtml(project.title)} · ${escapeHtml(group.title)}</p>
+          <h3>${escapeHtml(task.title)}</h3>
+        </div>
+        ${getStatusBadge(task.status)}
+      </div>
+      <dl class="next-action-card__meta">
+        <div>
+          <dt>Проект</dt>
+          <dd>${escapeHtml(project.title)}</dd>
+        </div>
+        <div>
+          <dt>Группа</dt>
+          <dd>${escapeHtml(group.title)}</dd>
+        </div>
+        <div>
+          <dt>Статус</dt>
+          <dd>${escapeHtml(getStatusMeta(task.status).label)}</dd>
+        </div>
+        <div>
+          <dt>Последнее движение</dt>
+          <dd>${formatDate(task.lastActivityDate)}</dd>
+        </div>
+      </dl>
+      <button class="done-button" type="button" data-complete-task-id="${escapeHtml(task.id)}">Выполнено</button>
+    </article>
+  `;
+}
+
+function bindDoneButtons(projects) {
+  document.querySelectorAll('[data-complete-task-id]').forEach((button) => {
+    button.addEventListener('click', () => completeTask(button.dataset.completeTaskId, projects));
+  });
+}
+
+function renderNextActions(projects) {
+  const actions = getAvailableActions(projects);
+  const list = document.querySelector('#next-actions-list');
+  const preview = document.querySelector('#next-actions-preview');
+  const counter = document.querySelector('[data-next-actions-count]');
+
+  if (counter) {
+    counter.textContent = actions.length;
+  }
+
+  if (list) {
+    list.innerHTML = actions.length
+      ? actions.map((action) => renderActionCard(action)).join('')
+      : '<div class="empty-section">Сейчас нет доступных подзадач без незавершённых предшественников.</div>';
+  }
+
+  if (preview) {
+    const shortList = actions.slice(0, 4);
+    preview.innerHTML = shortList.length
+      ? shortList.map((action) => renderActionCard(action, { compact: true })).join('')
+      : '<div class="empty-section empty-section--compact">Нет действий для правой колонки.</div>';
+  }
+
+  bindDoneButtons(projects);
+}
+
 function fillDemoWidgets(projects) {
   const active = document.querySelector('[data-widget="active"]');
   const next = document.querySelector('[data-widget="next"]');
@@ -593,7 +731,7 @@ function fillDemoWidgets(projects) {
   const stalled = document.querySelector('[data-widget="stalled"]');
 
   const activeProjects = projects.filter((project) => project.status === 'active').length;
-  const availableActions = projects.filter((project) => project.nextAction && !['done', 'cancelled', 'frozen'].includes(project.status)).length;
+  const availableActions = getAvailableActions(projects).length;
   const taskLookup = createTaskLookup(projects);
   const blockedTasks = getAllTasks(projects).filter((task) => isTaskBlocked(task, taskLookup)).length;
   const inactiveProjects = projects.filter((project) => getDaysSince(project.lastActivityDate) >= 14).length;
@@ -604,6 +742,13 @@ function fillDemoWidgets(projects) {
   if (stalled) stalled.textContent = inactiveProjects;
 }
 
-renderProjectCards(demoProjects);
-renderSelectedProject(demoProjects);
-fillDemoWidgets(demoProjects);
+function renderAll(projects) {
+  renderProjectCards(projects);
+  renderSelectedProject(projects);
+  fillDemoWidgets(projects);
+  renderNextActions(projects);
+  setActiveSection(activeSectionId);
+}
+
+setupSectionNavigation();
+renderAll(demoProjects);
