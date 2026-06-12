@@ -428,7 +428,6 @@ function renderProjectForm(project = {}) {
       <label>Название<input name="title" required maxlength="80" value="${escapeHtml(project.title || '')}"></label>
       <label>Статус<select name="status">${getStatusOptions(project.status || 'planned')}</select></label>
       <label>Описание<textarea name="description" rows="3">${escapeHtml(project.description || '')}</textarea></label>
-      <label>Следующее действие<textarea name="nextAction" rows="2">${escapeHtml(project.nextAction || '')}</textarea></label>
       <div class="entity-form__danger">
         ${deleteButton}
       </div>
@@ -926,7 +925,6 @@ function saveProject(form) {
     title,
     status: formData.get('status') || 'planned',
     description: String(formData.get('description') || '').trim(),
-    nextAction: String(formData.get('nextAction') || '').trim(),
     lastActivityDate: getTodayIsoDate()
   };
 
@@ -936,6 +934,7 @@ function saveProject(form) {
     const newProject = {
       id: createEntityId('project', title),
       progress: 0,
+      nextAction: '',
       tasks: [],
       groups: [],
       ...data
@@ -1453,13 +1452,27 @@ function persistReorderedProjectItems(project, itemType, orderedVisibleIds) {
   renderAll(projects);
 }
 
-function initializeSortableList(listElement, onReorder) {
+function persistReorderedSubtasks(project, group, orderedVisibleIds) {
+  if (!project || !group) return;
+
+  const didReorder = reorderItemsByVisibleOrder(group.tasks || [], orderedVisibleIds);
+
+  if (!didReorder) return;
+
+  const today = getTodayIsoDate();
+  group.lastActivityDate = today;
+  project.lastActivityDate = today;
+  persistProjects();
+  renderAll(projects);
+}
+
+function initializeSortableList(listElement, onReorder, draggableSelector, handleSelector = '[data-drag-handle]') {
   if (!listElement || typeof Sortable === 'undefined') return;
 
   Sortable.create(listElement, {
     animation: 150,
-    handle: '[data-drag-handle]',
-    draggable: '.project-task-item, .task-group--card',
+    handle: handleSelector,
+    draggable: draggableSelector,
     ghostClass: 'sortable-ghost',
     chosenClass: 'sortable-chosen',
     dragClass: 'sortable-drag',
@@ -1470,10 +1483,18 @@ function initializeSortableList(listElement, onReorder) {
 function initializeProjectSortables(root, project) {
   initializeSortableList(root.querySelector('[data-sortable-project-tasks]'), (orderedVisibleIds) => {
     persistReorderedProjectItems(project, 'tasks', orderedVisibleIds);
-  });
+  }, '.project-task-item', '[data-project-task-drag-handle]');
 
   initializeSortableList(root.querySelector('[data-sortable-project-groups]'), (orderedVisibleIds) => {
     persistReorderedProjectItems(project, 'groups', orderedVisibleIds);
+  }, '.task-group--card', '[data-group-drag-handle]');
+
+  root.querySelectorAll('[data-sortable-subtasks]').forEach((listElement) => {
+    const group = findGroup(project, listElement.dataset.sortableSubtasks);
+
+    initializeSortableList(listElement, (orderedVisibleIds) => {
+      persistReorderedSubtasks(project, group, orderedVisibleIds);
+    }, '.subtask-item', '[data-subtask-drag-handle]');
   });
 }
 
@@ -1618,7 +1639,7 @@ function renderTaskGroup(group, taskLookup, projectId, visibleTasks, options = {
           </div>
           <div class="task-group__header-controls">
             <button class="task-group__edit" type="button" data-action="edit-group" data-project-id="${escapeHtml(projectId)}" data-group-id="${escapeHtml(group.id)}" aria-label="Редактировать суммарную задачу">&#9998;</button>
-            <button class="drag-handle task-group__drag-handle" type="button" data-drag-handle aria-label="Изменить порядок суммарной задачи">☰</button>
+            <button class="drag-handle task-group__drag-handle" type="button" data-drag-handle data-group-drag-handle aria-label="Изменить порядок суммарной задачи">☰</button>
           </div>
         </div>
         <div class="task-group__meta-row">
@@ -1630,7 +1651,7 @@ function renderTaskGroup(group, taskLookup, projectId, visibleTasks, options = {
         </div>
       </div>
       ${isExpanded ? `
-        <div class="task-list" id="${escapeHtml(taskListId)}">
+        <div class="task-list" id="${escapeHtml(taskListId)}" data-sortable-subtasks="${escapeHtml(group.id)}" aria-label="Подзадачи суммарной задачи ${escapeHtml(group.title)}">
           ${tasks.length ? tasks.map((task) => renderTask(task, taskLookup, projectId)).join('') : `<div class="empty-section empty-section--compact">${escapeHtml(emptyText)}</div>`}
         </div>
       ` : ''}
@@ -1645,6 +1666,7 @@ function renderTask(task, taskLookup, projectId) {
   const dependencyText = dependencyTitles.join(', ');
   const taskClasses = [
     'task-item',
+    'subtask-item',
     isDone ? 'task-item--done' : '',
     isBlocked ? 'task-item--blocked' : ''
   ].filter(Boolean).join(' ');
@@ -1658,7 +1680,10 @@ function renderTask(task, taskLookup, projectId) {
             <strong>${isBlocked ? '<span class="task-item__lock" aria-hidden="true">🔒</span>' : ''}${escapeHtml(task.title)}</strong>
           </span>
         </label>
-        <button class="task-item__edit" type="button" data-action="edit-task" data-project-id="${escapeHtml(projectId)}" data-task-id="${escapeHtml(task.id)}" aria-label="Редактировать подзадачу">&#9998;</button>
+        <div class="task-item__controls">
+          <button class="task-item__edit" type="button" data-action="edit-task" data-project-id="${escapeHtml(projectId)}" data-task-id="${escapeHtml(task.id)}" aria-label="Редактировать подзадачу">&#9998;</button>
+          <button class="drag-handle task-item__drag-handle" type="button" data-drag-handle data-subtask-drag-handle aria-label="Изменить порядок подзадачи">☰</button>
+        </div>
       </div>
       ${task.note ? `<p>${escapeHtml(task.note)}</p>` : ''}
       ${dependencyText ? `<span class="task-item__depends" id="task-depends-${escapeHtml(task.id)}">${isBlocked ? 'Зависит от: ' : 'Зависимости: '}${escapeHtml(dependencyText)}</span>` : ''}
@@ -1689,7 +1714,7 @@ function renderProjectTask(task, taskLookup, projectId) {
         </label>
         <div class="task-item__controls">
           <button class="task-item__edit" type="button" data-action="edit-project-task" data-project-id="${escapeHtml(projectId)}" data-task-id="${escapeHtml(task.id)}" aria-label="Редактировать задачу">&#9998;</button>
-          <button class="drag-handle task-item__drag-handle" type="button" data-drag-handle aria-label="Изменить порядок задачи">☰</button>
+          <button class="drag-handle task-item__drag-handle" type="button" data-drag-handle data-project-task-drag-handle aria-label="Изменить порядок задачи">☰</button>
         </div>
       </div>
       ${task.note ? `<p>${escapeHtml(task.note)}</p>` : ''}
