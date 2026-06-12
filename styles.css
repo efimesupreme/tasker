@@ -3314,3 +3314,58 @@ h1 {
     font-size: 0.68rem;
   }
 }
+
+/* Collapsible summary task cards */
+.task-group__summary {
+  display: grid;
+  gap: 10px;
+  min-height: 44px;
+  border-radius: 13px;
+  cursor: pointer;
+}
+
+.task-group__summary:hover .task-group__title,
+.task-group__summary:focus-visible .task-group__title {
+  color: #eaf3ff;
+}
+
+.task-group__summary:focus-visible {
+  outline: 0;
+  box-shadow: var(--focus-ring);
+}
+
+.task-group__state {
+  display: inline-grid;
+  flex: 0 0 18px;
+  width: 18px;
+  place-items: center;
+  color: var(--muted);
+  font-size: 0.9rem;
+  line-height: 1;
+}
+
+.task-group--collapsed {
+  padding-bottom: 14px;
+}
+
+.task-group--expanded .task-list {
+  margin-top: 2px;
+}
+
+.task-group__summary .task-group__heading {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+}
+
+@media (max-width: 760px) {
+  .task-group__summary {
+    gap: 8px;
+    min-height: 48px;
+  }
+
+  .task-group__state {
+    flex-basis: 16px;
+    width: 16px;
+  }
+}
