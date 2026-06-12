@@ -3432,3 +3432,339 @@ h1 {
     gap: 4px;
   }
 }
+
+/* Theme palettes and cross-interface color mapping */
+:root,
+[data-theme="dark"] {
+  color-scheme: dark;
+  --bg: #080b10;
+  --surface: #131a25;
+  --surface-soft: #182231;
+  --surface-hover: #223044;
+  --border: #344357;
+  --text: #f4f8fb;
+  --muted: #b4c0cd;
+  --blue: #6aa1ff;
+  --green: #4ee6a5;
+  --orange: #ffc46b;
+  --red: #ff7d7d;
+  --violet: #c394ff;
+  --cyan: #86eaff;
+  --shadow: 0 16px 44px rgba(0, 0, 0, 0.34);
+  --focus-ring: 0 0 0 3px rgba(134, 234, 255, 0.28);
+  --body-gradient-start: rgba(79, 140, 255, 0.16);
+  --body-gradient-end: rgba(61, 220, 151, 0.08);
+  --topbar-bg: rgba(19, 26, 37, 0.94);
+  --panel-bg: linear-gradient(180deg, rgba(21, 29, 40, 0.96), rgba(17, 23, 32, 0.96));
+  --inner-bg: rgba(8, 11, 16, 0.34);
+  --inner-bg-strong: rgba(21, 29, 40, 0.7);
+  --field-bg: rgba(8, 11, 16, 0.9);
+  --progress-bg: rgba(5, 8, 13, 0.92);
+  --progress-grid: rgba(244, 248, 251, 0.08);
+  --progress-border: rgba(38, 50, 65, 0.86);
+  --primary-text: #06101f;
+  --placeholder: #8fa0b2;
+  --success-soft: rgba(61, 220, 151, 0.12);
+  --success-text: #d0ffe9;
+  --danger-soft: rgba(255, 107, 107, 0.12);
+  --danger-text: #ffd0d0;
+  --warning-soft: rgba(255, 196, 107, 0.12);
+  --warning-text: #ffe2b8;
+  --edit-text: #d3e1ff;
+  --drag-hover-text: #d7edff;
+  --modal-backdrop: rgba(3, 7, 12, 0.76);
+  --modal-bg: linear-gradient(180deg, rgba(21, 29, 40, 0.98), rgba(8, 11, 16, 0.98));
+  --status-blue-bg: rgba(79, 140, 255, 0.14);
+  --status-green-bg: rgba(61, 220, 151, 0.14);
+  --status-orange-bg: rgba(255, 176, 82, 0.14);
+  --status-red-bg: rgba(255, 107, 107, 0.14);
+  --status-violet-bg: rgba(178, 119, 255, 0.14);
+  --status-cyan-bg: rgba(108, 226, 255, 0.14);
+  --status-blue-text: #b9d0ff;
+  --status-green-text: #b9f4d8;
+  --status-orange-text: #ffd8a8;
+  --status-red-text: #ffc0c0;
+  --status-violet-text: #dbc4ff;
+  --status-cyan-text: #c2f5ff;
+}
+
+[data-theme="light"] {
+  color-scheme: light;
+  --bg: #eef3f8;
+  --surface: #ffffff;
+  --surface-soft: #f4f7fb;
+  --surface-hover: #e5edf7;
+  --border: #cdd8e5;
+  --text: #142033;
+  --muted: #607086;
+  --blue: #2563eb;
+  --green: #0f9f6e;
+  --orange: #b86d07;
+  --red: #d64242;
+  --violet: #7c3aed;
+  --cyan: #0789a8;
+  --shadow: 0 16px 40px rgba(27, 45, 74, 0.12);
+  --focus-ring: 0 0 0 3px rgba(37, 99, 235, 0.18);
+  --body-gradient-start: rgba(37, 99, 235, 0.12);
+  --body-gradient-end: rgba(15, 159, 110, 0.08);
+  --topbar-bg: rgba(255, 255, 255, 0.92);
+  --panel-bg: linear-gradient(180deg, rgba(255, 255, 255, 0.98), rgba(247, 250, 253, 0.98));
+  --inner-bg: rgba(244, 247, 251, 0.9);
+  --inner-bg-strong: #f3f6fa;
+  --field-bg: #ffffff;
+  --progress-bg: #dbe4ef;
+  --progress-grid: rgba(20, 32, 51, 0.09);
+  --progress-border: rgba(182, 197, 215, 0.9);
+  --primary-text: #06101f;
+  --placeholder: #7b8da4;
+  --success-soft: rgba(15, 159, 110, 0.12);
+  --success-text: #087653;
+  --danger-soft: rgba(214, 66, 66, 0.11);
+  --danger-text: #ad2f2f;
+  --warning-soft: rgba(184, 109, 7, 0.12);
+  --warning-text: #87520a;
+  --edit-text: #1d4ed8;
+  --drag-hover-text: #1746a2;
+  --modal-backdrop: rgba(15, 23, 42, 0.35);
+  --modal-bg: linear-gradient(180deg, #ffffff, #f7fafc);
+  --status-blue-bg: rgba(37, 99, 235, 0.11);
+  --status-green-bg: rgba(15, 159, 110, 0.11);
+  --status-orange-bg: rgba(184, 109, 7, 0.12);
+  --status-red-bg: rgba(214, 66, 66, 0.11);
+  --status-violet-bg: rgba(124, 58, 237, 0.11);
+  --status-cyan-bg: rgba(7, 137, 168, 0.11);
+  --status-blue-text: #1d4ed8;
+  --status-green-text: #087653;
+  --status-orange-text: #8a5408;
+  --status-red-text: #b83232;
+  --status-violet-text: #6d28d9;
+  --status-cyan-text: #087994;
+}
+
+body {
+  background:
+    radial-gradient(circle at top left, var(--body-gradient-start), transparent 34rem),
+    radial-gradient(circle at bottom right, var(--body-gradient-end), transparent 30rem),
+    var(--bg);
+}
+
+.topbar {
+  background: var(--topbar-bg);
+}
+
+.toolbar,
+.widget,
+.project-card,
+.project-board,
+.next-actions-panel,
+.empty-section,
+.project-workspace__hero {
+  background: var(--panel-bg);
+}
+
+.project-map__summary,
+.project-map__progress-card,
+.task-group,
+.task-item,
+.next-action-card,
+.stalled-card {
+  background: var(--inner-bg);
+}
+
+.project-map__meta div,
+.next-action-card__meta div,
+.stalled-card__meta div,
+.project-task-item {
+  background: var(--inner-bg-strong);
+  border-color: var(--border);
+}
+
+.search,
+.entity-form input,
+.entity-form textarea,
+.entity-form select,
+.modal__close {
+  background: var(--field-bg);
+}
+
+.search input::placeholder {
+  color: var(--placeholder);
+}
+
+.primary-button,
+.done-button,
+.brand-mark {
+  color: var(--primary-text);
+}
+
+.project-tabs__item--create,
+.add-task-button,
+.mini-button--success,
+.page-header__counter {
+  background: var(--success-soft);
+  color: var(--success-text);
+}
+
+.mini-button--danger,
+.entity-form__delete,
+.page-header__counter--stalled {
+  background: var(--danger-soft);
+  color: var(--danger-text);
+}
+
+.mini-button,
+.task-group__edit,
+.task-item__edit {
+  color: var(--edit-text);
+}
+
+.project-filter,
+.mini-button,
+.add-task-button,
+.task-group__edit,
+.task-item__edit {
+  background: rgba(79, 140, 255, 0.08);
+}
+
+[data-theme="light"] .project-filter,
+[data-theme="light"] .mini-button,
+[data-theme="light"] .add-task-button,
+[data-theme="light"] .task-group__edit,
+[data-theme="light"] .task-item__edit {
+  background: rgba(37, 99, 235, 0.08);
+}
+
+.project-filter--active,
+.menu__item:hover,
+.menu__item--active {
+  background: var(--surface-hover);
+  color: var(--text);
+}
+
+.project-card--selected {
+  border-color: var(--blue);
+  box-shadow: 0 0 0 1px color-mix(in srgb, var(--blue) 32%, transparent), var(--shadow);
+}
+
+.project-card__progress,
+.project-map__progress,
+.task-group__progress {
+  border-color: var(--progress-border);
+  background:
+    linear-gradient(90deg, var(--progress-grid) 1px, transparent 1px) 0 0 / 20% 100%,
+    var(--progress-bg);
+}
+
+.modal__backdrop {
+  background: var(--modal-backdrop);
+}
+
+.modal__panel {
+  background: var(--modal-bg);
+}
+
+.task-item--done {
+  border-color: color-mix(in srgb, var(--green) 36%, transparent);
+  background: var(--success-soft);
+}
+
+.task-item--done strong {
+  color: var(--success-text);
+}
+
+.task-item--blocked {
+  border-color: color-mix(in srgb, var(--orange) 45%, transparent);
+  background: linear-gradient(135deg, var(--warning-soft), var(--inner-bg));
+}
+
+.task-item--blocked strong,
+.task-item--blocked .task-item__depends,
+.task-blocked-notice {
+  color: var(--warning-text);
+}
+
+.task-blocked-notice {
+  border-color: color-mix(in srgb, var(--orange) 42%, transparent);
+  background: var(--warning-soft);
+}
+
+.drag-handle:hover,
+.drag-handle:focus-visible {
+  color: var(--drag-hover-text);
+}
+
+.task-group__summary:hover .task-group__title,
+.task-group__summary:focus-visible .task-group__title {
+  color: var(--text);
+}
+
+.settings-panel {
+  display: grid;
+  gap: 14px;
+  padding: 18px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  background: var(--panel-bg);
+  box-shadow: var(--shadow);
+}
+
+.section-heading--settings {
+  margin-bottom: 0;
+}
+
+.theme-switcher {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.theme-option {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  min-height: 42px;
+  padding: 0 14px;
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  background: var(--surface-soft);
+  color: var(--text);
+  font-weight: 850;
+}
+
+.theme-option:hover,
+.theme-option--active {
+  border-color: var(--blue);
+  background: var(--surface-hover);
+  box-shadow: 0 0 0 1px color-mix(in srgb, var(--blue) 22%, transparent);
+}
+
+.theme-option__swatch {
+  width: 18px;
+  height: 18px;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  box-shadow: inset 0 0 0 3px var(--surface);
+}
+
+.theme-option__swatch--dark {
+  background: linear-gradient(135deg, #080b10 50%, #6aa1ff 50%);
+}
+
+.theme-option__swatch--light {
+  background: linear-gradient(135deg, #ffffff 50%, #2563eb 50%);
+}
+
+@media (max-width: 640px) {
+  .settings-panel {
+    padding: 12px;
+  }
+
+  .theme-switcher {
+    grid-template-columns: 1fr;
+  }
+
+  .theme-option {
+    min-height: 38px;
+  }
+}

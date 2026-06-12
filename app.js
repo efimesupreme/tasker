@@ -175,6 +175,9 @@ const demoProjects = [
 ];
 
 const STORAGE_KEY = 'tasker.projects.v2';
+const THEME_STORAGE_KEY = 'tasker.theme';
+const DEFAULT_THEME = 'dark';
+const AVAILABLE_THEMES = ['dark', 'light'];
 const STALLED_DAYS_THRESHOLD = 14;
 const NON_STALLED_STATUSES = ['done', 'cancelled', 'frozen'];
 
@@ -182,6 +185,7 @@ let projects = loadProjects();
 let selectedProjectId = projects.some((project) => project.id === 'sample-project') ? 'sample-project' : projects[0]?.id || null;
 let activeSectionId = 'dashboard';
 let activeProjectFilter = 'all';
+let selectedTheme = loadTheme();
 const expandedGroupIds = new Set();
 
 
@@ -196,23 +200,56 @@ const projectStatuses = {
 };
 
 const statusColors = {
-  blue: 'rgba(79, 140, 255, 0.14)',
-  green: 'rgba(61, 220, 151, 0.14)',
-  orange: 'rgba(255, 176, 82, 0.14)',
-  red: 'rgba(255, 107, 107, 0.14)',
-  violet: 'rgba(178, 119, 255, 0.14)',
-  cyan: 'rgba(108, 226, 255, 0.14)'
+  blue: 'var(--status-blue-bg)',
+  green: 'var(--status-green-bg)',
+  orange: 'var(--status-orange-bg)',
+  red: 'var(--status-red-bg)',
+  violet: 'var(--status-violet-bg)',
+  cyan: 'var(--status-cyan-bg)'
 };
 
 const statusTextColors = {
-  blue: '#b9d0ff',
-  green: '#b9f4d8',
-  orange: '#ffd8a8',
-  red: '#ffc0c0',
-  violet: '#dbc4ff',
-  cyan: '#c2f5ff'
+  blue: 'var(--status-blue-text)',
+  green: 'var(--status-green-text)',
+  orange: 'var(--status-orange-text)',
+  red: 'var(--status-red-text)',
+  violet: 'var(--status-violet-text)',
+  cyan: 'var(--status-cyan-text)'
 };
 
+
+
+function normalizeTheme(theme) {
+  return AVAILABLE_THEMES.includes(theme) ? theme : DEFAULT_THEME;
+}
+
+function loadTheme() {
+  try {
+    return normalizeTheme(localStorage.getItem(THEME_STORAGE_KEY));
+  } catch (error) {
+    console.warn('Не удалось прочитать сохранённую тему, используется тёмная.', error);
+    return DEFAULT_THEME;
+  }
+}
+
+function persistTheme(theme) {
+  try {
+    localStorage.setItem(THEME_STORAGE_KEY, theme);
+  } catch (error) {
+    console.warn('Не удалось сохранить тему в браузере.', error);
+  }
+}
+
+function applyTheme(theme) {
+  selectedTheme = normalizeTheme(theme);
+  document.documentElement.dataset.theme = selectedTheme;
+}
+
+function selectTheme(theme) {
+  applyTheme(theme);
+  persistTheme(selectedTheme);
+  renderSettings();
+}
 
 function cloneProjects(projectList) {
   return JSON.parse(JSON.stringify(projectList));
@@ -816,6 +853,15 @@ function getSelectedProject(projects) {
   return projects.find((project) => project.id === selectedId) || null;
 }
 
+
+function renderSettings() {
+  document.querySelectorAll('[data-theme-choice]').forEach((button) => {
+    const isActive = button.dataset.themeChoice === selectedTheme;
+    button.classList.toggle('theme-option--active', isActive);
+    button.setAttribute('aria-pressed', String(isActive));
+  });
+}
+
 function renderProjectTabs(projects) {
   const tabs = document.querySelector('#project-tabs');
 
@@ -872,7 +918,7 @@ function setActiveSection(sectionId) {
   });
 
   document.querySelectorAll('[data-section-link]').forEach((link) => {
-    link.classList.toggle('menu__item--active', link.dataset.sectionLink === target && link.getAttribute('href') === `#${target}`);
+    link.classList.toggle('menu__item--active', link.dataset.sectionLink === target);
   });
 }
 
@@ -1214,6 +1260,13 @@ function setupEntityControls() {
       event.preventDefault();
       activeProjectFilter = filterButton.dataset.projectFilter || 'all';
       renderSelectedProject(projects);
+      return;
+    }
+
+    const themeButton = event.target.closest('[data-theme-choice]');
+    if (themeButton) {
+      event.preventDefault();
+      selectTheme(themeButton.dataset.themeChoice);
       return;
     }
 
@@ -1904,9 +1957,11 @@ function renderAll(projects) {
   updateDashboardWidgets(projects);
   renderNextActions(projects);
   renderStalledSection(projects);
+  renderSettings();
   setActiveSection(activeSectionId);
 }
 
+applyTheme(selectedTheme);
 setupSectionNavigation();
 setupEntityControls();
 renderAll(projects);
