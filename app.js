@@ -1280,6 +1280,13 @@ function setupEntityControls() {
       return;
     }
 
+    const dragHandle = event.target.closest('[data-drag-handle]');
+    if (dragHandle) {
+      event.preventDefault();
+      event.stopPropagation();
+      return;
+    }
+
     const groupToggle = event.target.closest('[data-toggle-group-id]');
     if (!groupToggle) return;
 
@@ -1291,7 +1298,7 @@ function setupEntityControls() {
   document.addEventListener('keydown', (event) => {
     if (event.key === 'Escape') closeEntityModal();
 
-    if (event.target.closest('[data-action]')) return;
+    if (event.target.closest('[data-action], [data-drag-handle]')) return;
 
     const groupToggle = event.target.closest('[data-toggle-group-id]');
     if (!groupToggle || !['Enter', ' '].includes(event.key)) return;
@@ -1387,11 +1394,6 @@ function renderProjectFilterBar(activeFilter) {
   `;
 }
 
-function getProjectFilterEmptyText(filter) {
-  if (filter === 'next') return 'Нет доступных задач и подзадач';
-  if (filter === 'stalled') return 'Нет зависших элементов';
-  return 'В проекте пока нет задач и суммарных задач. Добавьте первую задачу или суммарную задачу.';
-}
 
 function getTaskCompletionStats(tasks) {
   const total = tasks.length;
@@ -1406,6 +1408,73 @@ function renderCompletionText(stats) {
 
 function renderSubtaskCompletionText(stats) {
   return `${stats.done} из ${stats.total} подзадач`;
+}
+
+
+function reorderItemsByVisibleOrder(items, orderedVisibleIds) {
+  const visibleIds = orderedVisibleIds.filter(Boolean);
+  if (!items?.length || visibleIds.length < 2) return false;
+
+  const visibleIdSet = new Set(visibleIds);
+  const visibleItemsById = new Map(items
+    .filter((item) => visibleIdSet.has(item.id))
+    .map((item) => [item.id, item]));
+  const reorderedVisibleItems = visibleIds
+    .map((id) => visibleItemsById.get(id))
+    .filter(Boolean);
+
+  if (reorderedVisibleItems.length < 2) return false;
+
+  let visibleIndex = 0;
+  const nextItems = items.map((item) => {
+    if (!visibleIdSet.has(item.id)) return item;
+    const nextItem = reorderedVisibleItems[visibleIndex];
+    visibleIndex += 1;
+    return nextItem || item;
+  });
+
+  const hasChanged = nextItems.some((item, index) => item.id !== items[index]?.id);
+  if (!hasChanged) return false;
+
+  items.splice(0, items.length, ...nextItems);
+  return true;
+}
+
+function persistReorderedProjectItems(project, itemType, orderedVisibleIds) {
+  if (!project) return;
+
+  const targetItems = itemType === 'groups' ? project.groups : project.tasks;
+  const didReorder = reorderItemsByVisibleOrder(targetItems || [], orderedVisibleIds);
+
+  if (!didReorder) return;
+
+  project.lastActivityDate = getTodayIsoDate();
+  persistProjects();
+  renderAll(projects);
+}
+
+function initializeSortableList(listElement, onReorder) {
+  if (!listElement || typeof Sortable === 'undefined') return;
+
+  Sortable.create(listElement, {
+    animation: 150,
+    handle: '[data-drag-handle]',
+    draggable: '.project-task-item, .task-group--card',
+    ghostClass: 'sortable-ghost',
+    chosenClass: 'sortable-chosen',
+    dragClass: 'sortable-drag',
+    onEnd: () => onReorder(Array.from(listElement.children).map((item) => item.dataset.taskId || item.dataset.groupId))
+  });
+}
+
+function initializeProjectSortables(root, project) {
+  initializeSortableList(root.querySelector('[data-sortable-project-tasks]'), (orderedVisibleIds) => {
+    persistReorderedProjectItems(project, 'tasks', orderedVisibleIds);
+  });
+
+  initializeSortableList(root.querySelector('[data-sortable-project-groups]'), (orderedVisibleIds) => {
+    persistReorderedProjectItems(project, 'groups', orderedVisibleIds);
+  });
 }
 
 function renderSelectedProject(projects) {
@@ -1431,10 +1500,12 @@ function renderSelectedProject(projects) {
   const filteredGroups = getFilteredGroups(project, taskLookup, activeFilter);
   const projectTasksHtml = filteredProjectTasks.length
     ? filteredProjectTasks.map((task) => renderProjectTask(task, taskLookup, project.id)).join('')
-    : `<div class="empty-section empty-section--compact">${escapeHtml(getProjectFilterEmptyText(activeFilter))}</div>`;
+    : '';
   const groupsHtml = filteredGroups.length
     ? filteredGroups.map((entry) => renderTaskGroup(entry.group, taskLookup, project.id, entry.tasks, { filter: activeFilter, isStalledGroup: entry.isStalledGroup })).join('')
-    : `<div class="empty-section empty-section--compact">${escapeHtml(getProjectFilterEmptyText(activeFilter))}</div>`;
+    : '';
+  const hasProjectTasks = Boolean(projectTasksHtml);
+  const hasGroups = Boolean(groupsHtml);
 
   details.innerHTML = `
     <article class="project-workspace__hero">
@@ -1465,24 +1536,24 @@ function renderSelectedProject(projects) {
 
     ${renderProjectFilterBar(activeFilter)}
 
-    <section class="project-workspace__project-tasks" aria-label="Список задач проекта">
-      <div class="project-section-heading">
-        <h3>Задачи</h3>
-      </div>
-      <div class="project-task-list" aria-label="Задачи проекта ${escapeHtml(project.title)}">
-        ${projectTasksHtml}
-      </div>
-    </section>
+    ${hasProjectTasks ? `
+      <section class="project-workspace__project-tasks" aria-label="Список задач проекта">
+        <div class="project-task-list" data-sortable-project-tasks="${escapeHtml(project.id)}" aria-label="Задачи проекта ${escapeHtml(project.title)}">
+          ${projectTasksHtml}
+        </div>
+      </section>
+    ` : ''}
 
-    <section class="project-workspace__groups" aria-label="Список суммарных задач проекта">
-      <div class="project-section-heading">
-        <h3>Суммарные задачи</h3>
-      </div>
-      <div class="task-groups" aria-label="Суммарные задачи проекта ${escapeHtml(project.title)}">
-        ${groupsHtml}
-      </div>
-    </section>
+    ${hasGroups ? `
+      <section class="project-workspace__groups" aria-label="Список суммарных задач проекта">
+        <div class="task-groups" data-sortable-project-groups="${escapeHtml(project.id)}" aria-label="Суммарные задачи проекта ${escapeHtml(project.title)}">
+          ${groupsHtml}
+        </div>
+      </section>
+    ` : ''}
   `;
+
+  initializeProjectSortables(details, project);
 
   details.querySelectorAll('input[type="checkbox"][data-task-id]').forEach((checkbox) => {
     checkbox.addEventListener('click', (event) => {
@@ -1538,14 +1609,17 @@ function renderTaskGroup(group, taskLookup, projectId, visibleTasks, options = {
   ].join(' ');
 
   return `
-    <article class="${groupClasses}">
+    <article class="${groupClasses}" data-group-id="${escapeHtml(group.id)}">
       <div class="task-group__summary" data-toggle-group-id="${escapeHtml(groupStateId)}" role="button" tabindex="0" aria-expanded="${isExpanded}" aria-controls="${escapeHtml(taskListId)}" aria-label="${isExpanded ? 'Свернуть' : 'Развернуть'} суммарную задачу ${escapeHtml(group.title)}">
         <div class="task-group__header">
           <div class="task-group__heading">
             <span class="task-group__state" aria-hidden="true">${isExpanded ? '▾' : '▸'}</span>
             <span class="task-group__title">${escapeHtml(group.title)}</span>
           </div>
-          <button class="task-group__edit" type="button" data-action="edit-group" data-project-id="${escapeHtml(projectId)}" data-group-id="${escapeHtml(group.id)}" aria-label="Редактировать суммарную задачу">&#9998;</button>
+          <div class="task-group__header-controls">
+            <button class="task-group__edit" type="button" data-action="edit-group" data-project-id="${escapeHtml(projectId)}" data-group-id="${escapeHtml(group.id)}" aria-label="Редактировать суммарную задачу">&#9998;</button>
+            <button class="drag-handle task-group__drag-handle" type="button" data-drag-handle aria-label="Изменить порядок суммарной задачи">☰</button>
+          </div>
         </div>
         <div class="task-group__meta-row">
           <span class="task-group__stats">${progress}% · ${escapeHtml(renderSubtaskCompletionText(completion))}</span>
@@ -1576,7 +1650,7 @@ function renderTask(task, taskLookup, projectId) {
   ].filter(Boolean).join(' ');
 
   return `
-    <article class="${taskClasses}" ${isBlocked ? 'aria-disabled="true"' : ''}>
+    <article class="${taskClasses}" data-task-id="${escapeHtml(task.id)}" ${isBlocked ? 'aria-disabled="true"' : ''}>
       <div class="task-item__row">
         <label class="task-item__main">
           <input type="checkbox" data-task-id="${escapeHtml(task.id)}" ${isDone ? 'checked' : ''} ${isBlocked ? 'aria-describedby="task-depends-' + escapeHtml(task.id) + '"' : ''}>
@@ -1605,7 +1679,7 @@ function renderProjectTask(task, taskLookup, projectId) {
   ].filter(Boolean).join(' ');
 
   return `
-    <article class="${taskClasses}" ${isBlocked ? 'aria-disabled="true"' : ''}>
+    <article class="${taskClasses}" data-task-id="${escapeHtml(task.id)}" ${isBlocked ? 'aria-disabled="true"' : ''}>
       <div class="task-item__row">
         <label class="task-item__main">
           <input type="checkbox" data-task-id="${escapeHtml(task.id)}" ${isDone ? 'checked' : ''} ${isBlocked ? 'aria-describedby="task-depends-' + escapeHtml(task.id) + '"' : ''}>
@@ -1613,7 +1687,10 @@ function renderProjectTask(task, taskLookup, projectId) {
             <strong>${isBlocked ? '<span class="task-item__lock" aria-hidden="true">🔒</span>' : ''}${escapeHtml(task.title)}</strong>
           </span>
         </label>
-        <button class="task-item__edit" type="button" data-action="edit-project-task" data-project-id="${escapeHtml(projectId)}" data-task-id="${escapeHtml(task.id)}" aria-label="Редактировать задачу">&#9998;</button>
+        <div class="task-item__controls">
+          <button class="task-item__edit" type="button" data-action="edit-project-task" data-project-id="${escapeHtml(projectId)}" data-task-id="${escapeHtml(task.id)}" aria-label="Редактировать задачу">&#9998;</button>
+          <button class="drag-handle task-item__drag-handle" type="button" data-drag-handle aria-label="Изменить порядок задачи">☰</button>
+        </div>
       </div>
       ${task.note ? `<p>${escapeHtml(task.note)}</p>` : ''}
       ${dependencyText ? `<span class="task-item__depends" id="task-depends-${escapeHtml(task.id)}">${isBlocked ? 'Зависит от: ' : 'Зависимости: '}${escapeHtml(dependencyText)}</span>` : ''}
