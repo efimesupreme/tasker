@@ -4,6 +4,16 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Проектный трекер</title>
+  <script>
+    (function () {
+      try {
+        var theme = localStorage.getItem('tasker.theme') === 'light' ? 'light' : 'dark';
+        document.documentElement.dataset.theme = theme;
+      } catch (error) {
+        document.documentElement.dataset.theme = 'dark';
+      }
+    })();
+  </script>
   <link rel="stylesheet" href="./styles.css">
 </head>
 <body>
@@ -100,8 +110,26 @@
         <section class="empty-section">Раздел будет подключён позже.</section>
       </section>
       <section class="app-section" id="settings" data-section="settings" hidden>
-        <header class="page-header"><div><p class="eyebrow">Скоро</p><h2>Настройки</h2></div></header>
-        <section class="empty-section">Раздел будет подключён позже.</section>
+        <header class="page-header"><div><p class="eyebrow">Параметры</p><h2>Настройки</h2></div></header>
+        <section class="settings-panel" aria-labelledby="appearance-settings-title">
+          <div class="section-heading section-heading--settings">
+            <div>
+              <p class="eyebrow">Интерфейс</p>
+              <h3 id="appearance-settings-title">Оформление</h3>
+            </div>
+            <span class="section-heading__note">Выбор применяется сразу и сохраняется в браузере</span>
+          </div>
+          <div class="theme-switcher" role="group" aria-label="Выбор темы оформления">
+            <button class="theme-option" type="button" data-theme-choice="dark" aria-pressed="false">
+              <span class="theme-option__swatch theme-option__swatch--dark" aria-hidden="true"></span>
+              <span>Тёмная</span>
+            </button>
+            <button class="theme-option" type="button" data-theme-choice="light" aria-pressed="false">
+              <span class="theme-option__swatch theme-option__swatch--light" aria-hidden="true"></span>
+              <span>Светлая</span>
+            </button>
+          </div>
+        </section>
       </section>
     </main>
   </div>
