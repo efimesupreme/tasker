@@ -182,6 +182,8 @@ let projects = loadProjects();
 let selectedProjectId = projects.some((project) => project.id === 'sample-project') ? 'sample-project' : projects[0]?.id || null;
 let activeSectionId = 'dashboard';
 let activeProjectFilter = 'all';
+const expandedGroupIds = new Set();
+
 
 const projectStatuses = {
   idea: { label: 'Идея', accent: 'violet' },
@@ -1217,71 +1219,98 @@ function setupEntityControls() {
     }
 
     const actionButton = event.target.closest('[data-action]');
-    if (!actionButton) return;
+    if (actionButton) {
+      event.preventDefault();
+      event.stopPropagation();
+
+      const { action, projectId, groupId, taskId, itemType, itemId } = actionButton.dataset;
+
+      switch (action) {
+        case 'create-project':
+          openCreateProjectForm();
+          break;
+        case 'edit-project':
+          openEditProjectForm(projectId);
+          break;
+        case 'delete-project':
+          deleteProject(projectId);
+          break;
+        case 'create-group':
+          openCreateGroupForm(projectId);
+          break;
+        case 'create-project-task':
+          openCreateProjectTaskForm(projectId);
+          break;
+        case 'edit-group':
+          openEditGroupForm(projectId, groupId);
+          break;
+        case 'delete-group':
+          deleteGroup(projectId, groupId);
+          break;
+        case 'create-task':
+          openCreateTaskForm(projectId, groupId);
+          break;
+        case 'edit-task':
+          openEditTaskForm(projectId, taskId);
+          break;
+        case 'edit-project-task':
+          openEditProjectTaskForm(projectId, taskId);
+          break;
+        case 'delete-task':
+          deleteTask(projectId, taskId);
+          break;
+        case 'delete-project-task':
+          deleteProjectTask(projectId, taskId);
+          break;
+        case 'open-stalled':
+          openStalledItem(projectId);
+          break;
+        case 'freeze-stalled':
+          freezeStalledItem(itemType, projectId, itemId);
+          break;
+        case 'cancel-stalled':
+          cancelStalledItem(itemType, projectId, itemId);
+          break;
+        case 'touch-stalled':
+          markStalledItemMovement(itemType, projectId, itemId);
+          break;
+        default:
+          console.warn(`Неизвестное действие: ${action}`);
+      }
+      return;
+    }
+
+    const groupToggle = event.target.closest('[data-toggle-group-id]');
+    if (!groupToggle) return;
 
     event.preventDefault();
-    event.stopPropagation();
-
-    const { action, projectId, groupId, taskId, itemType, itemId } = actionButton.dataset;
-
-    switch (action) {
-      case 'create-project':
-        openCreateProjectForm();
-        break;
-      case 'edit-project':
-        openEditProjectForm(projectId);
-        break;
-      case 'delete-project':
-        deleteProject(projectId);
-        break;
-      case 'create-group':
-        openCreateGroupForm(projectId);
-        break;
-      case 'create-project-task':
-        openCreateProjectTaskForm(projectId);
-        break;
-      case 'edit-group':
-        openEditGroupForm(projectId, groupId);
-        break;
-      case 'delete-group':
-        deleteGroup(projectId, groupId);
-        break;
-      case 'create-task':
-        openCreateTaskForm(projectId, groupId);
-        break;
-      case 'edit-task':
-        openEditTaskForm(projectId, taskId);
-        break;
-      case 'edit-project-task':
-        openEditProjectTaskForm(projectId, taskId);
-        break;
-      case 'delete-task':
-        deleteTask(projectId, taskId);
-        break;
-      case 'delete-project-task':
-        deleteProjectTask(projectId, taskId);
-        break;
-      case 'open-stalled':
-        openStalledItem(projectId);
-        break;
-      case 'freeze-stalled':
-        freezeStalledItem(itemType, projectId, itemId);
-        break;
-      case 'cancel-stalled':
-        cancelStalledItem(itemType, projectId, itemId);
-        break;
-      case 'touch-stalled':
-        markStalledItemMovement(itemType, projectId, itemId);
-        break;
-      default:
-        console.warn(`Неизвестное действие: ${action}`);
-    }
+    toggleTaskGroup(groupToggle.dataset.toggleGroupId);
   });
 
   document.addEventListener('submit', handleEntityFormSubmit);
   document.addEventListener('keydown', (event) => {
     if (event.key === 'Escape') closeEntityModal();
+
+    if (event.target.closest('[data-action]')) return;
+
+    const groupToggle = event.target.closest('[data-toggle-group-id]');
+    if (!groupToggle || !['Enter', ' '].includes(event.key)) return;
+
+    event.preventDefault();
+    toggleTaskGroup(groupToggle.dataset.toggleGroupId);
   });
+}
+
+function toggleTaskGroup(groupId) {
+  if (!groupId) return;
+
+  if (expandedGroupIds.has(groupId)) {
+    expandedGroupIds.delete(groupId);
+  } else {
+    expandedGroupIds.add(groupId);
+  }
+
+  renderSelectedProject(projects);
 }
 
 
@@ -1499,25 +1528,38 @@ function renderTaskGroup(group, taskLookup, projectId, visibleTasks, options = {
   const allTasks = group.tasks || [];
   const completion = getTaskCompletionStats(allTasks);
   const emptyText = options.isStalledGroup ? 'Суммарная задача без движения 14+ дней' : 'В этой суммарной задаче пока нет подзадач.';
+  const groupStateId = `${projectId}::${group.id}`;
+  const isExpanded = expandedGroupIds.has(groupStateId);
+  const taskListId = `task-group-tasks-${projectId}-${group.id}`;
+  const groupClasses = [
+    'task-group',
+    'task-group--card',
+    isExpanded ? 'task-group--expanded' : 'task-group--collapsed'
+  ].join(' ');
 
   return `
-    <article class="task-group task-group--card">
-      <div class="task-group__header">
-        <div class="task-group__heading">
-          <span class="task-group__title">${escapeHtml(group.title)}</span>
+    <article class="${groupClasses}">
+      <div class="task-group__summary" data-toggle-group-id="${escapeHtml(groupStateId)}" role="button" tabindex="0" aria-expanded="${isExpanded}" aria-controls="${escapeHtml(taskListId)}" aria-label="${isExpanded ? 'Свернуть' : 'Развернуть'} суммарную задачу ${escapeHtml(group.title)}">
+        <div class="task-group__header">
+          <div class="task-group__heading">
+            <span class="task-group__state" aria-hidden="true">${isExpanded ? '▾' : '▸'}</span>
+            <span class="task-group__title">${escapeHtml(group.title)}</span>
+          </div>
+          <button class="task-group__edit" type="button" data-action="edit-group" data-project-id="${escapeHtml(projectId)}" data-group-id="${escapeHtml(group.id)}" aria-label="Редактировать суммарную задачу">&#9998;</button>
         </div>
-        <button class="task-group__edit" type="button" data-action="edit-group" data-project-id="${escapeHtml(projectId)}" data-group-id="${escapeHtml(group.id)}" aria-label="Редактировать суммарную задачу">&#9998;</button>
+        <div class="task-group__meta-row">
+          <span class="task-group__stats">${progress}% · ${escapeHtml(renderSubtaskCompletionText(completion))}</span>
+          <button class="add-task-button" type="button" data-action="create-task" data-project-id="${escapeHtml(projectId)}" data-group-id="${escapeHtml(group.id)}">+ Подзадача</button>
+        </div>
+        <div class="task-group__progress" aria-label="Прогресс суммарной задачи ${escapeHtml(group.title)}: ${progress}%">
+          <span style="width: ${progress}%;"></span>
+        </div>
       </div>
-      <div class="task-group__meta-row">
-        <span class="task-group__stats">${progress}% · ${escapeHtml(renderSubtaskCompletionText(completion))}</span>
-        <button class="add-task-button" type="button" data-action="create-task" data-project-id="${escapeHtml(projectId)}" data-group-id="${escapeHtml(group.id)}">+ Подзадача</button>
-      </div>
-      <div class="task-group__progress" aria-label="Прогресс суммарной задачи ${escapeHtml(group.title)}: ${progress}%">
-        <span style="width: ${progress}%;"></span>
-      </div>
-      <div class="task-list">
-        ${tasks.length ? tasks.map((task) => renderTask(task, taskLookup, projectId)).join('') : `<div class="empty-section empty-section--compact">${escapeHtml(emptyText)}</div>`}
-      </div>
+      ${isExpanded ? `
+        <div class="task-list" id="${escapeHtml(taskListId)}">
+          ${tasks.length ? tasks.map((task) => renderTask(task, taskLookup, projectId)).join('') : `<div class="empty-section empty-section--compact">${escapeHtml(emptyText)}</div>`}
+        </div>
+      ` : ''}
     </article>
   `;
 }
