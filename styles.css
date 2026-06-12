@@ -3369,3 +3369,66 @@ h1 {
     width: 16px;
   }
 }
+
+/* Manual task ordering */
+.task-item__controls,
+.task-group__header-controls {
+  display: inline-flex;
+  flex: 0 0 auto;
+  align-items: center;
+  gap: 6px;
+}
+
+.drag-handle {
+  display: inline-grid;
+  flex: 0 0 32px;
+  width: 32px;
+  height: 32px;
+  min-height: 32px;
+  padding: 0;
+  place-items: center;
+  border: 0;
+  border-radius: 10px;
+  background: transparent;
+  color: var(--muted);
+  cursor: grab;
+  font-size: 1rem;
+  line-height: 1;
+  touch-action: none;
+}
+
+.drag-handle:hover,
+.drag-handle:focus-visible {
+  background: rgba(134, 234, 255, 0.08);
+  color: #d7edff;
+  outline: 0;
+}
+
+.drag-handle:focus-visible {
+  box-shadow: var(--focus-ring);
+}
+
+.drag-handle:active {
+  cursor: grabbing;
+}
+
+.sortable-chosen,
+.sortable-drag {
+  cursor: grabbing;
+}
+
+.sortable-ghost {
+  opacity: 0.45;
+}
+
+.project-workspace__groups {
+  border-top: 1px solid rgba(148, 163, 184, 0.12);
+  padding-top: 10px;
+}
+
+@media (max-width: 520px) {
+  .task-item__controls,
+  .task-group__header-controls {
+    gap: 4px;
+  }
+}
