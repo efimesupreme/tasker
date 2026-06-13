@@ -176,6 +176,9 @@ const demoProjects = [
 
 const STORAGE_KEY = 'tasker.projects.v2';
 const THEME_STORAGE_KEY = 'tasker.theme';
+const LANGUAGE_STORAGE_KEY = 'tasker.language';
+const DEFAULT_LANGUAGE = 'ru';
+const AVAILABLE_LANGUAGES = ['ru', 'en', 'es', 'zh'];
 const DEFAULT_THEME = 'dark';
 const AVAILABLE_THEMES = ['dark', 'light'];
 const STALLED_DAYS_THRESHOLD = 14;
@@ -186,17 +189,39 @@ let selectedProjectId = projects.some((project) => project.id === 'sample-projec
 let activeSectionId = 'dashboard';
 let activeProjectFilter = 'all';
 let selectedTheme = loadTheme();
+let currentLanguage = loadLanguage();
 const expandedGroupIds = new Set();
 
 
+
+const translations = {
+  ru: {
+    appTitle: 'Проектный трекер', workspace: 'Рабочее пространство', settings: 'Настройки', settingsParams: 'Параметры', interface: 'Интерфейс', language: 'Язык интерфейса', theme: 'Оформление', darkTheme: 'Тёмная', lightTheme: 'Светлая', settingsNote: 'Выбор применяется сразу и сохраняется в браузере', themeChoice: 'Выбор темы оформления', languageChoice: 'Выбор языка интерфейса', saved: 'Сохранено', close: 'Закрыть', save: 'Сохранить', cancel: 'Отмена', delete: 'Удалить', edit: 'Редактировать', newProject: '+ Новый проект', taskAdd: '+ Задача', groupAdd: '+ Суммарная задача', editProject: 'Редактировать проект', deleteProject: 'Удалить проект', all: 'Все', started: 'Начаты', notStarted: 'Не начаты', doneFilter: 'Сделаны', task: 'Задача', projectTask: 'Задача проекта', groupTask: 'Суммарная задача', groupTasks: 'Суммарные задачи', subtask: 'Подзадача', subtasks: 'Подзадачи', subtaskAdd: '+ Подзадача', editTask: 'Редактировать задачу', editGroupTask: 'Редактировать суммарную задачу', editSubtask: 'Редактировать подзадачу', deleteTask: 'Удалить задачу', deleteGroupTask: 'Удалить суммарную задачу', deleteSubtask: 'Удалить подзадачу', title: 'Название', description: 'Описание', status: 'Статус', weight: 'Вес', note: 'Заметка', predecessors: 'Предшественники', createProject: 'Создать проект', createTask: 'Создать задачу', createGroupTask: 'Создать суммарную задачу', createSubtask: 'Создать подзадачу', newProjectTitle: 'Новый проект', newTaskTitle: 'Новая задача', newGroupTaskTitle: 'Новая суммарная задача', newSubtaskTitle: 'Новая подзадача', dataEditing: 'Редактирование данных', noStartedGroups: 'Нет начатых суммарных задач', noNotStartedTasks: 'Нет не начатых задач', noDoneTasks: 'Нет сделанных задач', noSubtasksInGroup: 'В этой суммарной задаче пока нет подзадач.', confirmDeleteProject: 'Удалить проект?', confirmDeleteTask: 'Удалить задачу?', confirmDeleteGroupTask: 'Удалить суммарную задачу?', confirmDeleteSubtask: 'Удалить подзадачу?', statusIdea: 'Идея', statusPlanned: 'Запланировано', statusActive: 'В работе', statusWaiting: 'Ждёт', statusFrozen: 'Заморожено', statusDone: 'Завершено', statusCancelled: 'Отменено', totalProgress: 'Общий прогресс', filtersAria: 'Фильтры задач проекта', projectTasksAria: 'Список задач проекта', groupTasksAria: 'Список суммарных задач проекта', collapse: 'Свернуть', expand: 'Развернуть', reorderTask: 'Изменить порядок задачи', reorderSubtask: 'Изменить порядок подзадачи', reorderGroupTask: 'Изменить порядок суммарной задачи', dependsOn: 'Зависит от: ', dependencies: 'Зависимости: ', completion: '{done} из {total} задач и подзадач', subtaskCompletion: '{done} из {total} подзадач', noProjects: 'Проектов пока нет. Нажмите «+ Новый проект» в верхней навигации, чтобы создать первый.', dependencyHint: 'Можно выбрать несколько задач этого проекта. Сама задача и очевидные циклы недоступны.', createsCycle: 'создаст цикл', projectTasksGroup: 'Задачи проекта', noOtherTasks: 'В проекте пока нет других задач', blockedMessage: 'Задача «{title}» заблокирована. Сначала завершите: {titles}.', modalCloseLabel: 'Закрыть форму'
+  },
+  en: {
+    appTitle: 'Project tracker', workspace: 'Workspace', settings: 'Settings', settingsParams: 'Preferences', interface: 'Interface', language: 'Interface language', theme: 'Appearance', darkTheme: 'Dark', lightTheme: 'Light', settingsNote: 'The choice is applied immediately and saved in the browser', themeChoice: 'Theme selection', languageChoice: 'Interface language selection', saved: 'Saved', close: 'Close', save: 'Save', cancel: 'Cancel', delete: 'Delete', edit: 'Edit', newProject: '+ New project', taskAdd: '+ Task', groupAdd: '+ Summary task', editProject: 'Edit project', deleteProject: 'Delete project', all: 'All', started: 'Started', notStarted: 'Not started', doneFilter: 'Done', task: 'Task', projectTask: 'Project task', groupTask: 'Summary task', groupTasks: 'Summary tasks', subtask: 'Subtask', subtasks: 'Subtasks', subtaskAdd: '+ Subtask', editTask: 'Edit task', editGroupTask: 'Edit summary task', editSubtask: 'Edit subtask', deleteTask: 'Delete task', deleteGroupTask: 'Delete summary task', deleteSubtask: 'Delete subtask', title: 'Title', description: 'Description', status: 'Status', weight: 'Weight', note: 'Note', predecessors: 'Predecessors', createProject: 'Create project', createTask: 'Create task', createGroupTask: 'Create summary task', createSubtask: 'Create subtask', newProjectTitle: 'New project', newTaskTitle: 'New task', newGroupTaskTitle: 'New summary task', newSubtaskTitle: 'New subtask', dataEditing: 'Data editing', noStartedGroups: 'No started summary tasks', noNotStartedTasks: 'No not started tasks', noDoneTasks: 'No done tasks', noSubtasksInGroup: 'This summary task has no subtasks yet.', confirmDeleteProject: 'Delete project?', confirmDeleteTask: 'Delete task?', confirmDeleteGroupTask: 'Delete summary task?', confirmDeleteSubtask: 'Delete subtask?', statusIdea: 'Idea', statusPlanned: 'Planned', statusActive: 'Active', statusWaiting: 'Waiting', statusFrozen: 'Frozen', statusDone: 'Done', statusCancelled: 'Cancelled', totalProgress: 'Total progress', filtersAria: 'Project task filters', projectTasksAria: 'Project task list', groupTasksAria: 'Project summary task list', collapse: 'Collapse', expand: 'Expand', reorderTask: 'Change task order', reorderSubtask: 'Change subtask order', reorderGroupTask: 'Change summary task order', dependsOn: 'Depends on: ', dependencies: 'Dependencies: ', completion: '{done} of {total} tasks and subtasks', subtaskCompletion: '{done} of {total} subtasks', noProjects: 'There are no projects yet. Click “+ New project” in the top navigation to create the first one.', dependencyHint: 'You can select several tasks in this project. The task itself and obvious cycles are unavailable.', createsCycle: 'creates a cycle', projectTasksGroup: 'Project tasks', noOtherTasks: 'There are no other tasks in this project yet', blockedMessage: 'Task “{title}” is blocked. Complete first: {titles}.', modalCloseLabel: 'Close form'
+  },
+  es: {
+    appTitle: 'Rastreador de proyectos', workspace: 'Espacio de trabajo', settings: 'Configuración', settingsParams: 'Parámetros', interface: 'Interfaz', language: 'Idioma de la interfaz', theme: 'Apariencia', darkTheme: 'Oscura', lightTheme: 'Clara', settingsNote: 'La selección se aplica al instante y se guarda en el navegador', themeChoice: 'Selección de tema', languageChoice: 'Selección de idioma de la interfaz', saved: 'Guardado', close: 'Cerrar', save: 'Guardar', cancel: 'Cancelar', delete: 'Eliminar', edit: 'Editar', newProject: '+ Nuevo proyecto', taskAdd: '+ Tarea', groupAdd: '+ Tarea resumen', editProject: 'Editar proyecto', deleteProject: 'Eliminar proyecto', all: 'Todas', started: 'Iniciadas', notStarted: 'No iniciadas', doneFilter: 'Hechas', task: 'Tarea', projectTask: 'Tarea del proyecto', groupTask: 'Tarea resumen', groupTasks: 'Tareas resumen', subtask: 'Subtarea', subtasks: 'Subtareas', subtaskAdd: '+ Subtarea', editTask: 'Editar tarea', editGroupTask: 'Editar tarea resumen', editSubtask: 'Editar subtarea', deleteTask: 'Eliminar tarea', deleteGroupTask: 'Eliminar tarea resumen', deleteSubtask: 'Eliminar subtarea', title: 'Título', description: 'Descripción', status: 'Estado', weight: 'Peso', note: 'Nota', predecessors: 'Predecesoras', createProject: 'Crear proyecto', createTask: 'Crear tarea', createGroupTask: 'Crear tarea resumen', createSubtask: 'Crear subtarea', newProjectTitle: 'Nuevo proyecto', newTaskTitle: 'Nueva tarea', newGroupTaskTitle: 'Nueva tarea resumen', newSubtaskTitle: 'Nueva subtarea', dataEditing: 'Edición de datos', noStartedGroups: 'No hay tareas resumen iniciadas', noNotStartedTasks: 'No hay tareas no iniciadas', noDoneTasks: 'No hay tareas hechas', noSubtasksInGroup: 'Esta tarea resumen aún no tiene subtareas.', confirmDeleteProject: '¿Eliminar proyecto?', confirmDeleteTask: '¿Eliminar tarea?', confirmDeleteGroupTask: '¿Eliminar tarea resumen?', confirmDeleteSubtask: '¿Eliminar subtarea?', statusIdea: 'Idea', statusPlanned: 'Planificado', statusActive: 'En curso', statusWaiting: 'En espera', statusFrozen: 'Congelado', statusDone: 'Completado', statusCancelled: 'Cancelado', totalProgress: 'Progreso total', filtersAria: 'Filtros de tareas del proyecto', projectTasksAria: 'Lista de tareas del proyecto', groupTasksAria: 'Lista de tareas resumen del proyecto', collapse: 'Contraer', expand: 'Expandir', reorderTask: 'Cambiar orden de la tarea', reorderSubtask: 'Cambiar orden de la subtarea', reorderGroupTask: 'Cambiar orden de la tarea resumen', dependsOn: 'Depende de: ', dependencies: 'Dependencias: ', completion: '{done} de {total} tareas y subtareas', subtaskCompletion: '{done} de {total} subtareas', noProjects: 'Todavía no hay proyectos. Haz clic en “+ Nuevo proyecto” en la navegación superior para crear el primero.', dependencyHint: 'Puedes seleccionar varias tareas de este proyecto. La propia tarea y los ciclos evidentes no están disponibles.', createsCycle: 'crea un ciclo', projectTasksGroup: 'Tareas del proyecto', noOtherTasks: 'Todavía no hay otras tareas en este proyecto', blockedMessage: 'La tarea “{title}” está bloqueada. Completa primero: {titles}.', modalCloseLabel: 'Cerrar formulario'
+  },
+  zh: {
+    appTitle: '项目跟踪器', workspace: '工作区', settings: '设置', settingsParams: '参数', interface: '界面', language: '界面语言', theme: '外观', darkTheme: '深色', lightTheme: '浅色', settingsNote: '选择会立即应用并保存在浏览器中', themeChoice: '主题选择', languageChoice: '界面语言选择', saved: '已保存', close: '关闭', save: '保存', cancel: '取消', delete: '删除', edit: '编辑', newProject: '+ 新项目', taskAdd: '+ 任务', groupAdd: '+ 汇总任务', editProject: '编辑项目', deleteProject: '删除项目', all: '全部', started: '已开始', notStarted: '未开始', doneFilter: '已完成', task: '任务', projectTask: '项目任务', groupTask: '汇总任务', groupTasks: '汇总任务', subtask: '子任务', subtasks: '子任务', subtaskAdd: '+ 子任务', editTask: '编辑任务', editGroupTask: '编辑汇总任务', editSubtask: '编辑子任务', deleteTask: '删除任务', deleteGroupTask: '删除汇总任务', deleteSubtask: '删除子任务', title: '名称', description: '描述', status: '状态', weight: '权重', note: '备注', predecessors: '前置任务', createProject: '创建项目', createTask: '创建任务', createGroupTask: '创建汇总任务', createSubtask: '创建子任务', newProjectTitle: '新项目', newTaskTitle: '新任务', newGroupTaskTitle: '新汇总任务', newSubtaskTitle: '新子任务', dataEditing: '数据编辑', noStartedGroups: '没有已开始的汇总任务', noNotStartedTasks: '没有未开始的任务', noDoneTasks: '没有已完成的任务', noSubtasksInGroup: '这个汇总任务还没有子任务。', confirmDeleteProject: '删除项目？', confirmDeleteTask: '删除任务？', confirmDeleteGroupTask: '删除汇总任务？', confirmDeleteSubtask: '删除子任务？', statusIdea: '想法', statusPlanned: '已计划', statusActive: '进行中', statusWaiting: '等待中', statusFrozen: '已冻结', statusDone: '已完成', statusCancelled: '已取消', totalProgress: '总进度', filtersAria: '项目任务筛选器', projectTasksAria: '项目任务列表', groupTasksAria: '项目汇总任务列表', collapse: '折叠', expand: '展开', reorderTask: '更改任务顺序', reorderSubtask: '更改子任务顺序', reorderGroupTask: '更改汇总任务顺序', dependsOn: '依赖于：', dependencies: '依赖关系：', completion: '{done}/{total} 个任务和子任务', subtaskCompletion: '{done}/{total} 个子任务', noProjects: '还没有项目。点击顶部导航中的“+ 新项目”创建第一个项目。', dependencyHint: '可以选择此项目中的多个任务。任务本身和明显循环不可选。', createsCycle: '会形成循环', projectTasksGroup: '项目任务', noOtherTasks: '此项目还没有其他任务', blockedMessage: '任务“{title}”被阻塞。请先完成：{titles}。', modalCloseLabel: '关闭表单'
+  }
+};
+
+function t(key, replacements = {}) {
+  const template = translations[currentLanguage]?.[key] || translations.ru[key] || key;
+  return Object.entries(replacements).reduce((text, [name, value]) => text.replaceAll(`{${name}}`, value), template);
+}
+
 const projectStatuses = {
-  idea: { label: 'Идея', accent: 'violet' },
-  planned: { label: 'Запланировано', accent: 'blue' },
-  active: { label: 'В работе', accent: 'green' },
-  waiting: { label: 'Ждёт', accent: 'orange' },
-  frozen: { label: 'Заморожено', accent: 'cyan' },
-  done: { label: 'Завершено', accent: 'green' },
-  cancelled: { label: 'Отменено', accent: 'red' }
+  idea: { labelKey: 'statusIdea', accent: 'violet' },
+  planned: { labelKey: 'statusPlanned', accent: 'blue' },
+  active: { labelKey: 'statusActive', accent: 'green' },
+  waiting: { labelKey: 'statusWaiting', accent: 'orange' },
+  frozen: { labelKey: 'statusFrozen', accent: 'cyan' },
+  done: { labelKey: 'statusDone', accent: 'green' },
+  cancelled: { labelKey: 'statusCancelled', accent: 'red' }
 };
 
 const statusColors = {
@@ -218,6 +243,39 @@ const statusTextColors = {
 };
 
 
+
+function normalizeLanguage(language) {
+  return AVAILABLE_LANGUAGES.includes(language) ? language : DEFAULT_LANGUAGE;
+}
+
+function loadLanguage() {
+  try {
+    return normalizeLanguage(localStorage.getItem(LANGUAGE_STORAGE_KEY));
+  } catch (error) {
+    console.warn('Не удалось прочитать сохранённый язык, используется русский.', error);
+    return DEFAULT_LANGUAGE;
+  }
+}
+
+function persistLanguage(language) {
+  try {
+    localStorage.setItem(LANGUAGE_STORAGE_KEY, language);
+  } catch (error) {
+    console.warn('Не удалось сохранить язык в браузере.', error);
+  }
+}
+
+function applyLanguage(language) {
+  currentLanguage = normalizeLanguage(language);
+  document.documentElement.lang = currentLanguage === 'zh' ? 'zh-CN' : currentLanguage;
+  document.title = t('appTitle');
+}
+
+function selectLanguage(language) {
+  applyLanguage(language);
+  persistLanguage(currentLanguage);
+  renderAll(projects);
+}
 
 function normalizeTheme(theme) {
   return AVAILABLE_THEMES.includes(theme) ? theme : DEFAULT_THEME;
@@ -344,7 +402,7 @@ function createEntityId(prefix, title) {
 
 function getStatusOptions(selectedStatus) {
   return Object.entries(projectStatuses).map(([value, meta]) => {
-    return `<option value="${escapeHtml(value)}" ${value === selectedStatus ? 'selected' : ''}>${escapeHtml(meta.label)}</option>`;
+    return `<option value="${escapeHtml(value)}" ${value === selectedStatus ? 'selected' : ''}>${escapeHtml(t(meta.labelKey))}</option>`;
   }).join('');
 }
 
@@ -395,13 +453,13 @@ function getDependencyOptions(project, currentTaskId, selectedDependencyIds = []
     .map((task) => {
       const wouldCycle = currentTaskId && hasDependencyPath(project, task.id, currentTaskId);
       const isSelected = selectedDependencyIds.includes(task.id);
-      const label = wouldCycle ? `${task.title} — создаст цикл` : task.title;
+      const label = wouldCycle ? `${task.title} — ${t('createsCycle')}` : task.title;
 
       return `<option value="${escapeHtml(task.id)}" ${isSelected ? 'selected' : ''} ${wouldCycle ? 'disabled' : ''}>${escapeHtml(label)}</option>`;
     }).join('');
 
   const projectTaskGroup = projectTaskOptions
-    ? `<optgroup label="Задачи проекта">${projectTaskOptions}</optgroup>`
+    ? `<optgroup label="${escapeHtml(t('projectTasksGroup'))}">${projectTaskOptions}</optgroup>`
     : '';
 
   const groupOptions = (project?.groups || []).map((group) => {
@@ -410,7 +468,7 @@ function getDependencyOptions(project, currentTaskId, selectedDependencyIds = []
       .map((task) => {
         const wouldCycle = currentTaskId && hasDependencyPath(project, task.id, currentTaskId);
         const isSelected = selectedDependencyIds.includes(task.id);
-        const label = wouldCycle ? `${task.title} — создаст цикл` : task.title;
+        const label = wouldCycle ? `${task.title} — ${t('createsCycle')}` : task.title;
 
         return `<option value="${escapeHtml(task.id)}" ${isSelected ? 'selected' : ''} ${wouldCycle ? 'disabled' : ''}>${escapeHtml(label)}</option>`;
       }).join('');
@@ -422,7 +480,7 @@ function getDependencyOptions(project, currentTaskId, selectedDependencyIds = []
     return `<optgroup label="${escapeHtml(group.title)}">${taskOptions}</optgroup>`;
   }).join('');
 
-  return projectTaskGroup + groupOptions || '<option disabled>В проекте пока нет других задач</option>';
+  return projectTaskGroup + groupOptions || `<option disabled>${escapeHtml(t('noOtherTasks'))}</option>`;
 }
 
 function getSelectedValues(select) {
@@ -447,7 +505,7 @@ function openEntityModal(title, formHtml) {
   }
 
   content.innerHTML = `
-    <p class="eyebrow">Редактирование данных</p>
+    <p class="eyebrow">${escapeHtml(t('dataEditing'))}</p>
     <h3 class="modal__title" id="entity-modal-title">${escapeHtml(title)}</h3>
     ${formHtml}
   `;
@@ -457,20 +515,20 @@ function openEntityModal(title, formHtml) {
 
 function renderProjectForm(project = {}) {
   const deleteButton = project.id
-    ? `<button class="mini-button mini-button--danger entity-form__delete" type="button" data-action="delete-project" data-project-id="${escapeHtml(project.id)}">Удалить проект</button>`
+    ? `<button class="mini-button mini-button--danger entity-form__delete" type="button" data-action="delete-project" data-project-id="${escapeHtml(project.id)}">${escapeHtml(t('deleteProject'))}</button>`
     : '';
 
   return `
     <form class="entity-form" data-form-type="project" data-project-id="${escapeHtml(project.id || '')}">
-      <label>Название<input name="title" required maxlength="80" value="${escapeHtml(project.title || '')}"></label>
-      <label>Статус<select name="status">${getStatusOptions(project.status || 'planned')}</select></label>
-      <label>Описание<textarea name="description" rows="3">${escapeHtml(project.description || '')}</textarea></label>
+      <label>${escapeHtml(t('title'))}<input name="title" required maxlength="80" value="${escapeHtml(project.title || '')}"></label>
+      <label>${escapeHtml(t('status'))}<select name="status">${getStatusOptions(project.status || 'planned')}</select></label>
+      <label>${escapeHtml(t('description'))}<textarea name="description" rows="3">${escapeHtml(project.description || '')}</textarea></label>
       <div class="entity-form__danger">
         ${deleteButton}
       </div>
       <div class="entity-form__actions">
-        <button class="ghost-button" type="button" data-modal-close>Отмена</button>
-        <button class="primary-button" type="submit">Сохранить</button>
+        <button class="ghost-button" type="button" data-modal-close>${escapeHtml(t('cancel'))}</button>
+        <button class="primary-button" type="submit">${escapeHtml(t('save'))}</button>
       </div>
     </form>
   `;
@@ -478,19 +536,19 @@ function renderProjectForm(project = {}) {
 
 function renderGroupForm(projectId, group = {}) {
   const deleteButton = group.id
-    ? `<button class="mini-button mini-button--danger entity-form__delete" type="button" data-action="delete-group" data-project-id="${escapeHtml(projectId)}" data-group-id="${escapeHtml(group.id)}">Удалить суммарную задачу</button>`
+    ? `<button class="mini-button mini-button--danger entity-form__delete" type="button" data-action="delete-group" data-project-id="${escapeHtml(projectId)}" data-group-id="${escapeHtml(group.id)}">${escapeHtml(t('deleteGroupTask'))}</button>`
     : '';
 
   return `
     <form class="entity-form" data-form-type="group" data-project-id="${escapeHtml(projectId)}" data-group-id="${escapeHtml(group.id || '')}">
-      <label>Название<input name="title" required maxlength="80" value="${escapeHtml(group.title || '')}"></label>
-      <label>Статус<select name="status">${getStatusOptions(group.status || 'planned')}</select></label>
-      <label>Вес<input name="weight" type="number" min="1" max="100" step="1" value="${escapeHtml(group.weight || 1)}"></label>
+      <label>${escapeHtml(t('title'))}<input name="title" required maxlength="80" value="${escapeHtml(group.title || '')}"></label>
+      <label>${escapeHtml(t('status'))}<select name="status">${getStatusOptions(group.status || 'planned')}</select></label>
+      <label>${escapeHtml(t('weight'))}<input name="weight" type="number" min="1" max="100" step="1" value="${escapeHtml(group.weight || 1)}"></label>
       <div class="entity-form__actions entity-form__actions--split">
         <div class="entity-form__danger">${deleteButton}</div>
         <div class="entity-form__save-actions">
-          <button class="ghost-button" type="button" data-modal-close>Отмена</button>
-          <button class="primary-button" type="submit">Сохранить</button>
+          <button class="ghost-button" type="button" data-modal-close>${escapeHtml(t('cancel'))}</button>
+          <button class="primary-button" type="submit">${escapeHtml(t('save'))}</button>
         </div>
       </div>
     </form>
@@ -501,26 +559,26 @@ function renderTaskForm(projectId, groupId, task = {}) {
   const project = findProject(projectId);
   const dependsOn = task.dependsOn || [];
   const deleteButton = task.id
-    ? `<button class="mini-button mini-button--danger entity-form__delete" type="button" data-action="delete-task" data-project-id="${escapeHtml(projectId)}" data-task-id="${escapeHtml(task.id)}">Удалить подзадачу</button>`
+    ? `<button class="mini-button mini-button--danger entity-form__delete" type="button" data-action="delete-task" data-project-id="${escapeHtml(projectId)}" data-task-id="${escapeHtml(task.id)}">${escapeHtml(t('deleteSubtask'))}</button>`
     : '';
 
   return `
     <form class="entity-form" data-form-type="task" data-project-id="${escapeHtml(projectId)}" data-group-id="${escapeHtml(groupId)}" data-task-id="${escapeHtml(task.id || '')}">
-      <label>Название<input name="title" required maxlength="100" value="${escapeHtml(task.title || '')}"></label>
-      <label>Статус<select name="status">${getStatusOptions(task.status || 'planned')}</select></label>
-      <label>Вес<input name="weight" type="number" min="1" max="100" step="1" value="${escapeHtml(task.weight || 1)}"></label>
-      <label>Заметка<textarea name="note" rows="3">${escapeHtml(task.note || '')}</textarea></label>
-      <label>Предшественники
+      <label>${escapeHtml(t('title'))}<input name="title" required maxlength="100" value="${escapeHtml(task.title || '')}"></label>
+      <label>${escapeHtml(t('status'))}<select name="status">${getStatusOptions(task.status || 'planned')}</select></label>
+      <label>${escapeHtml(t('weight'))}<input name="weight" type="number" min="1" max="100" step="1" value="${escapeHtml(task.weight || 1)}"></label>
+      <label>${escapeHtml(t('note'))}<textarea name="note" rows="3">${escapeHtml(task.note || '')}</textarea></label>
+      <label>${escapeHtml(t('predecessors'))}
         <select name="dependsOn" multiple size="6">
           ${getDependencyOptions(project, task.id, dependsOn)}
         </select>
-        <span class="entity-form__hint">Можно выбрать несколько задач этого проекта. Сама задача и очевидные циклы недоступны.</span>
+        <span class="entity-form__hint">${escapeHtml(t('dependencyHint'))}</span>
       </label>
       <div class="entity-form__actions entity-form__actions--split">
         <div class="entity-form__danger">${deleteButton}</div>
         <div class="entity-form__save-actions">
-          <button class="ghost-button" type="button" data-modal-close>Отмена</button>
-          <button class="primary-button" type="submit">Сохранить</button>
+          <button class="ghost-button" type="button" data-modal-close>${escapeHtml(t('cancel'))}</button>
+          <button class="primary-button" type="submit">${escapeHtml(t('save'))}</button>
         </div>
       </div>
     </form>
@@ -531,26 +589,26 @@ function renderProjectTaskForm(projectId, task = {}) {
   const project = findProject(projectId);
   const dependsOn = task.dependsOn || [];
   const deleteButton = task.id
-    ? `<button class="mini-button mini-button--danger entity-form__delete" type="button" data-action="delete-project-task" data-project-id="${escapeHtml(projectId)}" data-task-id="${escapeHtml(task.id)}">Удалить задачу</button>`
+    ? `<button class="mini-button mini-button--danger entity-form__delete" type="button" data-action="delete-project-task" data-project-id="${escapeHtml(projectId)}" data-task-id="${escapeHtml(task.id)}">${escapeHtml(t('deleteTask'))}</button>`
     : '';
 
   return `
     <form class="entity-form" data-form-type="project-task" data-project-id="${escapeHtml(projectId)}" data-task-id="${escapeHtml(task.id || '')}">
-      <label>Название<input name="title" required maxlength="100" value="${escapeHtml(task.title || '')}"></label>
-      <label>Статус<select name="status">${getStatusOptions(task.status || 'planned')}</select></label>
-      <label>Вес<input name="weight" type="number" min="1" max="100" step="1" value="${escapeHtml(task.weight || 1)}"></label>
-      <label>Заметка<textarea name="note" rows="3">${escapeHtml(task.note || '')}</textarea></label>
-      <label>Предшественники
+      <label>${escapeHtml(t('title'))}<input name="title" required maxlength="100" value="${escapeHtml(task.title || '')}"></label>
+      <label>${escapeHtml(t('status'))}<select name="status">${getStatusOptions(task.status || 'planned')}</select></label>
+      <label>${escapeHtml(t('weight'))}<input name="weight" type="number" min="1" max="100" step="1" value="${escapeHtml(task.weight || 1)}"></label>
+      <label>${escapeHtml(t('note'))}<textarea name="note" rows="3">${escapeHtml(task.note || '')}</textarea></label>
+      <label>${escapeHtml(t('predecessors'))}
         <select name="dependsOn" multiple size="6">
           ${getDependencyOptions(project, task.id, dependsOn)}
         </select>
-        <span class="entity-form__hint">Можно выбрать несколько задач этого проекта. Сама задача и очевидные циклы недоступны.</span>
+        <span class="entity-form__hint">${escapeHtml(t('dependencyHint'))}</span>
       </label>
       <div class="entity-form__actions entity-form__actions--split">
         <div class="entity-form__danger">${deleteButton}</div>
         <div class="entity-form__save-actions">
-          <button class="ghost-button" type="button" data-modal-close>Отмена</button>
-          <button class="primary-button" type="submit">Сохранить</button>
+          <button class="ghost-button" type="button" data-modal-close>${escapeHtml(t('cancel'))}</button>
+          <button class="primary-button" type="submit">${escapeHtml(t('save'))}</button>
         </div>
       </div>
     </form>
@@ -558,29 +616,29 @@ function renderProjectTaskForm(projectId, task = {}) {
 }
 
 function openCreateProjectForm() {
-  openEntityModal('Новый проект', renderProjectForm());
+  openEntityModal(t('newProjectTitle'), renderProjectForm());
 }
 
 function openEditProjectForm(projectId) {
   const project = findProject(projectId);
-  if (project) openEntityModal('Редактирование проекта', renderProjectForm(project));
+  if (project) openEntityModal(t('editProject'), renderProjectForm(project));
 }
 
 function openCreateGroupForm(projectId) {
-  openEntityModal('Новая суммарная задача', renderGroupForm(projectId));
+  openEntityModal(t('newGroupTaskTitle'), renderGroupForm(projectId));
 }
 
 function openCreateProjectTaskForm(projectId) {
-  openEntityModal('Новая задача', renderProjectTaskForm(projectId));
+  openEntityModal(t('newTaskTitle'), renderProjectTaskForm(projectId));
 }
 
 function openEditGroupForm(projectId, groupId) {
   const group = findGroup(findProject(projectId), groupId);
-  if (group) openEntityModal('Редактирование суммарной задачи', renderGroupForm(projectId, group));
+  if (group) openEntityModal(t('editGroupTask'), renderGroupForm(projectId, group));
 }
 
 function openCreateTaskForm(projectId, groupId) {
-  openEntityModal('Новая подзадача', renderTaskForm(projectId, groupId));
+  openEntityModal(t('newSubtaskTitle'), renderTaskForm(projectId, groupId));
 }
 
 function openEditTaskForm(projectId, taskId) {
@@ -589,7 +647,7 @@ function openEditTaskForm(projectId, taskId) {
   const task = findTask(project, taskId);
 
   if (group && task) {
-    openEntityModal('Редактирование подзадачи', renderTaskForm(projectId, group.id, task));
+    openEntityModal(t('editSubtask'), renderTaskForm(projectId, group.id, task));
   }
 }
 
@@ -597,7 +655,7 @@ function openEditProjectTaskForm(projectId, taskId) {
   const task = findProjectTask(findProject(projectId), taskId);
 
   if (task) {
-    openEntityModal('Редактирование задачи', renderProjectTaskForm(projectId, task));
+    openEntityModal(t('editTask'), renderProjectTaskForm(projectId, task));
   }
 }
 
@@ -606,7 +664,7 @@ function getStatusMeta(status) {
 }
 
 function formatDate(dateValue) {
-  return new Intl.DateTimeFormat('ru-RU', {
+  return new Intl.DateTimeFormat(currentLanguage === 'zh' ? 'zh-CN' : currentLanguage, {
     day: 'numeric',
     month: 'long',
     year: 'numeric'
@@ -738,7 +796,7 @@ function renderBlockedTaskMessage(task, taskLookup) {
   const blockingDependencies = getBlockingDependencies(task, taskLookup);
   const titles = blockingDependencies.map((dependency) => dependency.title).join(', ');
 
-  return `Задача «${task.title}» заблокирована. Сначала завершите: ${titles}.`;
+  return t('blockedMessage', { title: task.title, titles });
 }
 
 function updateBlockedTaskNotice(message) {
@@ -854,13 +912,78 @@ function getSelectedProject(projects) {
 }
 
 
+function getLanguageOptions() {
+  return [
+    { id: 'ru', label: 'Русский' },
+    { id: 'en', label: 'English' },
+    { id: 'es', label: 'Español' },
+    { id: 'zh', label: '中文' }
+  ];
+}
+
+function updateStaticText() {
+  document.title = t('appTitle');
+  const brandTitle = document.querySelector('.topbar__brand h1');
+  const brandEyebrow = document.querySelector('.topbar__brand .eyebrow');
+  const settingsHeader = document.querySelector('#settings .page-header');
+  const modalClose = document.querySelector('.modal__close');
+
+  if (brandTitle) brandTitle.textContent = t('appTitle');
+  if (brandEyebrow) brandEyebrow.textContent = t('workspace');
+  if (settingsHeader) settingsHeader.innerHTML = `<div><p class="eyebrow">${escapeHtml(t('settingsParams'))}</p><h2>${escapeHtml(t('settings'))}</h2></div>`;
+  if (modalClose) modalClose.setAttribute('aria-label', t('modalCloseLabel'));
+}
+
 function renderSettings() {
+  updateStaticText();
+
+  const panel = document.querySelector('.settings-panel');
+  if (panel) {
+    panel.innerHTML = `
+      <div class="section-heading section-heading--settings">
+        <div>
+          <p class="eyebrow">${escapeHtml(t('interface'))}</p>
+          <h3 id="appearance-settings-title">${escapeHtml(t('theme'))}</h3>
+        </div>
+        <span class="section-heading__note">${escapeHtml(t('settingsNote'))}</span>
+      </div>
+      <div class="theme-switcher" role="group" aria-label="${escapeHtml(t('themeChoice'))}">
+        <button class="theme-option" type="button" data-theme-choice="dark" aria-pressed="false">
+          <span class="theme-option__swatch theme-option__swatch--dark" aria-hidden="true"></span>
+          <span>${escapeHtml(t('darkTheme'))}</span>
+        </button>
+        <button class="theme-option" type="button" data-theme-choice="light" aria-pressed="false">
+          <span class="theme-option__swatch theme-option__swatch--light" aria-hidden="true"></span>
+          <span>${escapeHtml(t('lightTheme'))}</span>
+        </button>
+      </div>
+      <div class="section-heading section-heading--settings settings-language-heading">
+        <div>
+          <p class="eyebrow">${escapeHtml(t('saved'))}</p>
+          <h3>${escapeHtml(t('language'))}</h3>
+        </div>
+      </div>
+      <div class="language-switcher" role="group" aria-label="${escapeHtml(t('languageChoice'))}">
+        ${getLanguageOptions().map((language) => `
+          <button class="language-option" type="button" data-language-choice="${escapeHtml(language.id)}" aria-pressed="false">${escapeHtml(language.label)}</button>
+        `).join('')}
+      </div>
+    `;
+  }
+
   document.querySelectorAll('[data-theme-choice]').forEach((button) => {
     const isActive = button.dataset.themeChoice === selectedTheme;
     button.classList.toggle('theme-option--active', isActive);
     button.setAttribute('aria-pressed', String(isActive));
   });
+
+  document.querySelectorAll('[data-language-choice]').forEach((button) => {
+    const isActive = button.dataset.languageChoice === currentLanguage;
+    button.classList.toggle('language-option--active', isActive);
+    button.setAttribute('aria-pressed', String(isActive));
+  });
 }
+
 
 function renderProjectTabs(projects) {
   const tabs = document.querySelector('#project-tabs');
@@ -884,8 +1007,8 @@ function renderProjectTabs(projects) {
 
   tabs.innerHTML = `
     ${projectButtons}
-    <button class="menu__item project-tabs__item project-tabs__item--create" type="button" data-action="create-project">+ Новый проект</button>
-    <button class="menu__item project-tabs__settings" type="button" data-section-link="settings" aria-label="Настройки" title="Настройки">⚙</button>
+    <button class="menu__item project-tabs__item project-tabs__item--create" type="button" data-action="create-project">${escapeHtml(t('newProject'))}</button>
+    <button class="menu__item project-tabs__settings" type="button" data-section-link="settings" aria-label="${escapeHtml(t('settings'))}" title="${escapeHtml(t('settings'))}">⚙</button>
   `;
 }
 
@@ -904,7 +1027,7 @@ function getStatusBadge(statusValue) {
   const background = statusColors[status.accent] || statusColors.blue;
   const color = statusTextColors[status.accent] || statusTextColors.blue;
 
-  return `<span class="project-card__status" style="background: ${background}; color: ${color};">${escapeHtml(status.label)}</span>`;
+  return `<span class="project-card__status" style="background: ${background}; color: ${color};">${escapeHtml(t(status.labelKey))}</span>`;
 }
 
 function setActiveSection(sectionId) {
@@ -1111,7 +1234,7 @@ function handleEntityFormSubmit(event) {
 
 function deleteProject(projectId) {
   const project = findProject(projectId);
-  if (!project || !window.confirm(`Удалить проект «${project.title}» со всеми задачами, суммарными задачами и подзадачами?`)) return;
+  if (!project || !window.confirm(`${t('confirmDeleteProject')} ${project.title}`)) return;
 
   projects = projects.filter((item) => item.id !== projectId);
   selectedProjectId = projects[0]?.id || null;
@@ -1123,7 +1246,7 @@ function deleteProject(projectId) {
 function deleteGroup(projectId, groupId) {
   const project = findProject(projectId);
   const group = findGroup(project, groupId);
-  if (!project || !group || !window.confirm(`Удалить суммарную задачу «${group.title}» со всеми подзадачами?`)) return;
+  if (!project || !group || !window.confirm(`${t('confirmDeleteGroupTask')} ${group.title}`)) return;
 
   const removedTaskIds = new Set((group.tasks || []).map((task) => task.id));
   project.groups = project.groups.filter((item) => item.id !== groupId);
@@ -1141,7 +1264,7 @@ function deleteTask(projectId, taskId) {
   const project = findProject(projectId);
   const group = getTaskGroup(project, taskId);
   const task = findTask(project, taskId);
-  if (!project || !group || !task || !window.confirm(`Удалить подзадачу «${task.title}»?`)) return;
+  if (!project || !group || !task || !window.confirm(`${t('confirmDeleteSubtask')} ${task.title}`)) return;
 
   const today = getTodayIsoDate();
   group.tasks = (group.tasks || []).filter((item) => item.id !== taskId);
@@ -1159,7 +1282,7 @@ function deleteTask(projectId, taskId) {
 function deleteProjectTask(projectId, taskId) {
   const project = findProject(projectId);
   const task = findProjectTask(project, taskId);
-  if (!project || !task || !window.confirm(`Удалить задачу «${task.title}»?`)) return;
+  if (!project || !task || !window.confirm(`${t('confirmDeleteTask')} ${task.title}`)) return;
 
   project.tasks = (project.tasks || []).filter((item) => item.id !== taskId);
   getProjectTasks(project).forEach((item) => {
@@ -1270,6 +1393,13 @@ function setupEntityControls() {
       return;
     }
 
+    const languageButton = event.target.closest('[data-language-choice]');
+    if (languageButton) {
+      event.preventDefault();
+      selectLanguage(languageButton.dataset.languageChoice);
+      return;
+    }
+
     const actionButton = event.target.closest('[data-action]');
     if (actionButton) {
       event.preventDefault();
@@ -1376,10 +1506,10 @@ function toggleTaskGroup(groupId) {
 
 function getProjectFilterOptions() {
   return [
-    { id: 'all', label: 'Все' },
-    { id: 'started', label: 'Начаты' },
-    { id: 'not-started', label: 'Не начаты' },
-    { id: 'done', label: 'Сделаны' }
+    { id: 'all', label: t('all') },
+    { id: 'started', label: t('started') },
+    { id: 'not-started', label: t('notStarted') },
+    { id: 'done', label: t('doneFilter') }
   ];
 }
 
@@ -1455,15 +1585,15 @@ function getFilteredGroups(project, taskLookup, filter) {
 }
 
 function getProjectFilterEmptyText(filter) {
-  if (filter === 'started') return 'Нет начатых суммарных задач';
-  if (filter === 'not-started') return 'Нет не начатых задач';
-  if (filter === 'done') return 'Нет сделанных задач';
+  if (filter === 'started') return t('noStartedGroups');
+  if (filter === 'not-started') return t('noNotStartedTasks');
+  if (filter === 'done') return t('noDoneTasks');
   return '';
 }
 
 function renderProjectFilterBar(activeFilter) {
   return `
-    <nav class="project-filters" aria-label="Фильтры задач проекта">
+    <nav class="project-filters" aria-label="${escapeHtml(t('filtersAria'))}">
       ${getProjectFilterOptions().map((filter) => `
         <button class="project-filter ${filter.id === activeFilter ? 'project-filter--active' : ''}" type="button" data-project-filter="${escapeHtml(filter.id)}" aria-pressed="${filter.id === activeFilter}">${escapeHtml(filter.label)}</button>
       `).join('')}
@@ -1480,11 +1610,11 @@ function getTaskCompletionStats(tasks) {
 }
 
 function renderCompletionText(stats) {
-  return `${stats.done} из ${stats.total} задач и подзадач`;
+  return t('completion', { done: stats.done, total: stats.total });
 }
 
 function renderSubtaskCompletionText(stats) {
-  return `${stats.done} из ${stats.total} подзадач`;
+  return t('subtaskCompletion', { done: stats.done, total: stats.total });
 }
 
 
@@ -1587,7 +1717,7 @@ function renderSelectedProject(projects) {
   const project = getSelectedProject(projects);
 
   if (!project) {
-    details.innerHTML = '<div class="empty-section">Проектов пока нет. Нажмите «+ Новый проект» в верхней навигации, чтобы создать первый.</div>';
+    details.innerHTML = `<div class="empty-section">${escapeHtml(t('noProjects'))}</div>`;
     return;
   }
 
@@ -1617,18 +1747,18 @@ function renderSelectedProject(projects) {
           ${getStatusBadge(project.status)}
         </div>
         <div class="project-workspace__progress-line">
-          <span>Общий прогресс</span>
+          <span>${escapeHtml(t('totalProgress'))}</span>
           <strong>${progress}%</strong>
         </div>
-        <div class="project-map__progress" aria-label="Общий прогресс проекта ${escapeHtml(project.title)}: ${progress}%">
+        <div class="project-map__progress" aria-label="${escapeHtml(t('totalProgress'))} ${escapeHtml(project.title)}: ${progress}%">
           <span style="width: ${progress}%;"></span>
         </div>
         <p class="project-workspace__completion">${escapeHtml(renderCompletionText(completion))}</p>
       </div>
       <div class="project-workspace__actions">
-        <button class="mini-button" type="button" data-action="edit-project" data-project-id="${escapeHtml(project.id)}">Редактировать</button>
-        <button class="primary-button" type="button" data-action="create-project-task" data-project-id="${escapeHtml(project.id)}">+ Задача</button>
-        <button class="primary-button" type="button" data-action="create-group" data-project-id="${escapeHtml(project.id)}">+ Суммарная задача</button>
+        <button class="mini-button" type="button" data-action="edit-project" data-project-id="${escapeHtml(project.id)}">${escapeHtml(t('edit'))}</button>
+        <button class="primary-button" type="button" data-action="create-project-task" data-project-id="${escapeHtml(project.id)}">${escapeHtml(t('taskAdd'))}</button>
+        <button class="primary-button" type="button" data-action="create-group" data-project-id="${escapeHtml(project.id)}">${escapeHtml(t('groupAdd'))}</button>
       </div>
     </article>
 
@@ -1637,16 +1767,16 @@ function renderSelectedProject(projects) {
     ${renderProjectFilterBar(activeFilter)}
 
     ${hasProjectTasks ? `
-      <section class="project-workspace__project-tasks" aria-label="Список задач проекта">
-        <div class="project-task-list" data-sortable-project-tasks="${escapeHtml(project.id)}" aria-label="Задачи проекта ${escapeHtml(project.title)}">
+      <section class="project-workspace__project-tasks" aria-label="${escapeHtml(t('projectTasksAria'))}">
+        <div class="project-task-list" data-sortable-project-tasks="${escapeHtml(project.id)}" aria-label="${escapeHtml(t('projectTasksAria'))} ${escapeHtml(project.title)}">
           ${projectTasksHtml}
         </div>
       </section>
     ` : ''}
 
     ${hasGroups ? `
-      <section class="project-workspace__groups" aria-label="Список суммарных задач проекта">
-        <div class="task-groups" data-sortable-project-groups="${escapeHtml(project.id)}" aria-label="Суммарные задачи проекта ${escapeHtml(project.title)}">
+      <section class="project-workspace__groups" aria-label="${escapeHtml(t('groupTasksAria'))}">
+        <div class="task-groups" data-sortable-project-groups="${escapeHtml(project.id)}" aria-label="${escapeHtml(t('groupTasksAria'))} ${escapeHtml(project.title)}">
           ${groupsHtml}
         </div>
       </section>
@@ -1700,7 +1830,7 @@ function renderTaskGroup(group, taskLookup, projectId, visibleTasks, options = {
   const tasks = visibleTasks || group.tasks || [];
   const allTasks = group.tasks || [];
   const completion = getTaskCompletionStats(allTasks);
-  const emptyText = 'В этой суммарной задаче пока нет подзадач.';
+  const emptyText = t('noSubtasksInGroup');
   const groupStateId = `${projectId}::${group.id}`;
   const isExpanded = expandedGroupIds.has(groupStateId);
   const taskListId = `task-group-tasks-${projectId}-${group.id}`;
@@ -1712,27 +1842,27 @@ function renderTaskGroup(group, taskLookup, projectId, visibleTasks, options = {
 
   return `
     <article class="${groupClasses}" data-group-id="${escapeHtml(group.id)}">
-      <div class="task-group__summary" data-toggle-group-id="${escapeHtml(groupStateId)}" role="button" tabindex="0" aria-expanded="${isExpanded}" aria-controls="${escapeHtml(taskListId)}" aria-label="${isExpanded ? 'Свернуть' : 'Развернуть'} суммарную задачу ${escapeHtml(group.title)}">
+      <div class="task-group__summary" data-toggle-group-id="${escapeHtml(groupStateId)}" role="button" tabindex="0" aria-expanded="${isExpanded}" aria-controls="${escapeHtml(taskListId)}" aria-label="${isExpanded ? escapeHtml(t('collapse')) : escapeHtml(t('expand'))} ${escapeHtml(t('groupTask'))} ${escapeHtml(group.title)}">
         <div class="task-group__header">
           <div class="task-group__heading">
             <span class="task-group__state" aria-hidden="true">${isExpanded ? '▾' : '▸'}</span>
             <span class="task-group__title">${escapeHtml(group.title)}</span>
           </div>
           <div class="task-group__header-controls">
-            <button class="task-group__edit" type="button" data-action="edit-group" data-project-id="${escapeHtml(projectId)}" data-group-id="${escapeHtml(group.id)}" aria-label="Редактировать суммарную задачу">&#9998;</button>
-            <button class="drag-handle task-group__drag-handle" type="button" data-drag-handle data-group-drag-handle aria-label="Изменить порядок суммарной задачи">☰</button>
+            <button class="task-group__edit" type="button" data-action="edit-group" data-project-id="${escapeHtml(projectId)}" data-group-id="${escapeHtml(group.id)}" aria-label="${escapeHtml(t('editGroupTask'))}">&#9998;</button>
+            <button class="drag-handle task-group__drag-handle" type="button" data-drag-handle data-group-drag-handle aria-label="${escapeHtml(t('reorderGroupTask'))}">☰</button>
           </div>
         </div>
         <div class="task-group__meta-row">
           <span class="task-group__stats">${progress}% · ${escapeHtml(renderSubtaskCompletionText(completion))}</span>
-          <button class="add-task-button" type="button" data-action="create-task" data-project-id="${escapeHtml(projectId)}" data-group-id="${escapeHtml(group.id)}">+ Подзадача</button>
+          <button class="add-task-button" type="button" data-action="create-task" data-project-id="${escapeHtml(projectId)}" data-group-id="${escapeHtml(group.id)}">${escapeHtml(t('subtaskAdd'))}</button>
         </div>
-        <div class="task-group__progress" aria-label="Прогресс суммарной задачи ${escapeHtml(group.title)}: ${progress}%">
+        <div class="task-group__progress" aria-label="${escapeHtml(t('totalProgress'))} ${escapeHtml(t('groupTask'))} ${escapeHtml(group.title)}: ${progress}%">
           <span style="width: ${progress}%;"></span>
         </div>
       </div>
       ${isExpanded ? `
-        <div class="task-list" id="${escapeHtml(taskListId)}" data-sortable-subtasks="${escapeHtml(group.id)}" aria-label="Подзадачи суммарной задачи ${escapeHtml(group.title)}">
+        <div class="task-list" id="${escapeHtml(taskListId)}" data-sortable-subtasks="${escapeHtml(group.id)}" aria-label="${escapeHtml(t('subtasks'))} ${escapeHtml(t('groupTask'))} ${escapeHtml(group.title)}">
           ${tasks.length ? tasks.map((task) => renderTask(task, taskLookup, projectId)).join('') : `<div class="empty-section empty-section--compact">${escapeHtml(emptyText)}</div>`}
         </div>
       ` : ''}
@@ -1762,12 +1892,12 @@ function renderTask(task, taskLookup, projectId) {
           </span>
         </label>
         <div class="task-item__controls">
-          <button class="task-item__edit" type="button" data-action="edit-task" data-project-id="${escapeHtml(projectId)}" data-task-id="${escapeHtml(task.id)}" aria-label="Редактировать подзадачу">&#9998;</button>
-          <button class="drag-handle task-item__drag-handle" type="button" data-drag-handle data-subtask-drag-handle aria-label="Изменить порядок подзадачи">☰</button>
+          <button class="task-item__edit" type="button" data-action="edit-task" data-project-id="${escapeHtml(projectId)}" data-task-id="${escapeHtml(task.id)}" aria-label="${escapeHtml(t('editSubtask'))}">&#9998;</button>
+          <button class="drag-handle task-item__drag-handle" type="button" data-drag-handle data-subtask-drag-handle aria-label="${escapeHtml(t('reorderSubtask'))}">☰</button>
         </div>
       </div>
       ${task.note ? `<p>${escapeHtml(task.note)}</p>` : ''}
-      ${dependencyText ? `<span class="task-item__depends" id="task-depends-${escapeHtml(task.id)}">${isBlocked ? 'Зависит от: ' : 'Зависимости: '}${escapeHtml(dependencyText)}</span>` : ''}
+      ${dependencyText ? `<span class="task-item__depends" id="task-depends-${escapeHtml(task.id)}">${isBlocked ? t('dependsOn') : t('dependencies')}${escapeHtml(dependencyText)}</span>` : ''}
     </article>
   `;
 }
@@ -1794,12 +1924,12 @@ function renderProjectTask(task, taskLookup, projectId) {
           </span>
         </label>
         <div class="task-item__controls">
-          <button class="task-item__edit" type="button" data-action="edit-project-task" data-project-id="${escapeHtml(projectId)}" data-task-id="${escapeHtml(task.id)}" aria-label="Редактировать задачу">&#9998;</button>
-          <button class="drag-handle task-item__drag-handle" type="button" data-drag-handle data-project-task-drag-handle aria-label="Изменить порядок задачи">☰</button>
+          <button class="task-item__edit" type="button" data-action="edit-project-task" data-project-id="${escapeHtml(projectId)}" data-task-id="${escapeHtml(task.id)}" aria-label="${escapeHtml(t('editTask'))}">&#9998;</button>
+          <button class="drag-handle task-item__drag-handle" type="button" data-drag-handle data-project-task-drag-handle aria-label="${escapeHtml(t('reorderTask'))}">☰</button>
         </div>
       </div>
       ${task.note ? `<p>${escapeHtml(task.note)}</p>` : ''}
-      ${dependencyText ? `<span class="task-item__depends" id="task-depends-${escapeHtml(task.id)}">${isBlocked ? 'Зависит от: ' : 'Зависимости: '}${escapeHtml(dependencyText)}</span>` : ''}
+      ${dependencyText ? `<span class="task-item__depends" id="task-depends-${escapeHtml(task.id)}">${isBlocked ? t('dependsOn') : t('dependencies')}${escapeHtml(dependencyText)}</span>` : ''}
     </article>
   `;
 }
@@ -1812,7 +1942,7 @@ function renderActionCard(action, options = {}) {
     <article class="next-action-card ${isCompact ? 'next-action-card--compact' : ''}">
       <div class="next-action-card__main">
         <div>
-          <p class="eyebrow">${escapeHtml(project.title)} · ${group ? escapeHtml(group.title) : 'Задача'}</p>
+          <p class="eyebrow">${escapeHtml(project.title)} · ${group ? escapeHtml(group.title) : escapeHtml(t('task'))}</p>
           <h3>${escapeHtml(task.title)}</h3>
         </div>
         ${getStatusBadge(task.status)}
@@ -1824,11 +1954,11 @@ function renderActionCard(action, options = {}) {
         </div>
         <div>
           <dt>Тип</dt>
-          <dd>${group ? `Суммарная задача: ${escapeHtml(group.title)}` : 'Задача проекта'}</dd>
+          <dd>${group ? `${escapeHtml(t('groupTask'))}: ${escapeHtml(group.title)}` : escapeHtml(t('projectTask'))}</dd>
         </div>
         <div>
-          <dt>Статус</dt>
-          <dd>${escapeHtml(getStatusMeta(task.status).label)}</dd>
+          <dt>${escapeHtml(t('status'))}</dt>
+          <dd>${escapeHtml(t(getStatusMeta(task.status).labelKey))}</dd>
         </div>
         <div>
           <dt>Последнее движение</dt>
@@ -1910,8 +2040,8 @@ function renderStalledCard(entry) {
           <dd>${days} дн.</dd>
         </div>
         <div>
-          <dt>Статус</dt>
-          <dd>${escapeHtml(getStatusMeta(item.status).label)}</dd>
+          <dt>${escapeHtml(t('status'))}</dt>
+          <dd>${escapeHtml(t(getStatusMeta(item.status).labelKey))}</dd>
         </div>
         <div>
           <dt>Последнее движение</dt>
@@ -1989,6 +2119,7 @@ function renderAll(projects) {
   setActiveSection(activeSectionId);
 }
 
+applyLanguage(currentLanguage);
 applyTheme(selectedTheme);
 setupSectionNavigation();
 setupEntityControls();

@@ -3768,3 +3768,43 @@ body {
     min-height: 38px;
   }
 }
+
+.language-switcher {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.language-option {
+  min-height: 38px;
+  padding: 0 10px;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: var(--surface-soft);
+  color: var(--text);
+  font-weight: 850;
+  white-space: nowrap;
+}
+
+.language-option:hover,
+.language-option--active {
+  border-color: var(--green);
+  background: var(--surface-hover);
+  box-shadow: 0 0 0 1px color-mix(in srgb, var(--green) 22%, transparent);
+}
+
+.settings-language-heading {
+  margin-top: 8px;
+}
+
+@media (max-width: 640px) {
+  .language-switcher {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .language-option {
+    min-height: 36px;
+    padding: 0 8px;
+    font-size: 0.92rem;
+  }
+}
