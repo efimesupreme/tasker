@@ -1096,7 +1096,7 @@ function renderProjectTabs(projects) {
     const isSelected = project.id === selectedProjectId;
 
     return `
-      <button class="menu__item project-tabs__item ${project.colorId ? `project-tabs__item--color project-color-${escapeHtml(project.colorId)}` : ''} ${isSelected ? 'menu__item--active' : ''}" type="button" data-project-tab-id="${escapeHtml(project.id)}" aria-pressed="${isSelected}" title="${escapeHtml(project.title)}">
+      <button class="menu__item project-tabs__item ${project.colorId ? `project-tabs__item--color project-color-${escapeHtml(project.colorId)}` : ''} ${isSelected ? 'menu__item--active' : ''}" type="button" data-project-tab data-project-id="${escapeHtml(project.id)}" data-project-tab-id="${escapeHtml(project.id)}" aria-pressed="${isSelected}" title="${escapeHtml(project.title)}">
         <span class="project-tabs__title">${escapeHtml(project.title)}</span>
       </button>
     `;
@@ -1108,40 +1108,51 @@ function renderProjectTabs(projects) {
     <button class="menu__item project-tabs__settings" type="button" data-section-link="settings" aria-label="${escapeHtml(t('settings'))}" title="${escapeHtml(t('settings'))}">⚙</button>
   `;
 
-  const progressButton = document.querySelector('[data-action="open-progress"]');
-  if (progressButton) progressButton.textContent = t('progress');
 
   initializeProjectTabsSortable(tabs);
 }
 
 
+let projectTabsSortable = null;
 let projectTabDragJustEnded = false;
 
 function initializeProjectTabsSortable(tabs) {
   if (!tabs || typeof Sortable === 'undefined') return;
 
-  Sortable.create(tabs, {
+  if (projectTabsSortable) {
+    projectTabsSortable.destroy();
+    projectTabsSortable = null;
+  }
+
+  projectTabsSortable = Sortable.create(tabs, {
     animation: 150,
-    draggable: '.project-tabs__item:not(.project-tabs__item--create)',
+    direction: 'horizontal',
+    draggable: '[data-project-tab]',
     filter: '.project-tabs__item--create, .project-tabs__settings',
     preventOnFilter: false,
-    delayOnTouchOnly: true,
     delay: 220,
+    delayOnTouchOnly: true,
     touchStartThreshold: 8,
     fallbackTolerance: 5,
+    fallbackOnBody: true,
+    swapThreshold: 0.65,
     forceFallback: true,
     ghostClass: 'project-tabs__item--ghost',
     chosenClass: 'project-tabs__item--chosen',
     dragClass: 'project-tabs__item--drag',
-    onEnd: () => {
-      const orderedIds = Array.from(tabs.querySelectorAll('[data-project-tab-id]')).map((item) => item.dataset.projectTabId);
+    onEnd: (event) => {
+      projectTabDragJustEnded = true;
+      window.setTimeout(() => { projectTabDragJustEnded = false; }, 80);
+
+      if (event.oldIndex === event.newIndex) return;
+
+      const orderedIds = Array.from(tabs.querySelectorAll('[data-project-tab]')).map((item) => item.dataset.projectId);
       const orderedIdSet = new Set(orderedIds);
       projects = [
         ...orderedIds.map((id) => findProject(id)).filter(Boolean),
         ...projects.filter((project) => !orderedIdSet.has(project.id))
       ];
-      projectTabDragJustEnded = true;
-      window.setTimeout(() => { projectTabDragJustEnded = false; }, 0);
+      ensureSelectedProject(projects);
       persistProjects();
       renderAll(projects);
     }
@@ -1505,14 +1516,6 @@ function markStalledItemMovement(type, projectId, itemId) {
 
 function setupEntityControls() {
   document.addEventListener('click', (event) => {
-    const progressCloseButton = event.target.closest('[data-progress-close]');
-    if (progressCloseButton) {
-      event.preventDefault();
-      event.stopPropagation();
-      closeProgressModal();
-      return;
-    }
-
     const closeButton = event.target.closest('[data-modal-close]');
     if (closeButton) {
       event.preventDefault();
@@ -1559,9 +1562,6 @@ function setupEntityControls() {
       const { action, projectId, groupId, taskId, itemType, itemId } = actionButton.dataset;
 
       switch (action) {
-        case 'open-progress':
-          openProgressModal();
-          break;
         case 'create-project':
           openCreateProjectForm();
           break;
@@ -2265,110 +2265,6 @@ function updateDashboardWidgets(projects) {
 }
 
 
-function addDays(date, amount) {
-  const copy = new Date(date);
-  copy.setDate(copy.getDate() + amount);
-  return copy;
-}
-
-function formatActivityDate(dateIso) {
-  const date = new Date(`${dateIso}T00:00:00`);
-  return date.toLocaleDateString(currentLanguage === 'zh' ? 'zh-CN' : currentLanguage);
-}
-
-function getTaskWord(count) {
-  if (currentLanguage !== 'ru') return count === 1 ? t('taskSingular') : t('taskMany');
-  const mod10 = count % 10;
-  const mod100 = count % 100;
-  if (mod10 === 1 && mod100 !== 11) return t('taskSingular');
-  if ([2, 3, 4].includes(mod10) && ![12, 13, 14].includes(mod100)) return t('taskFew');
-  return t('taskMany');
-}
-
-function getActivityLevel(count) {
-  if (count <= 0) return 0;
-  if (count === 1) return 1;
-  if (count <= 3) return 2;
-  if (count <= 6) return 3;
-  return 4;
-}
-
-function buildActivityStats() {
-  const today = new Date(`${getTodayIsoDate()}T00:00:00`);
-  const start = addDays(today, -364);
-  const counts = new Map();
-
-  activityLog.forEach((entry) => {
-    const date = new Date(`${entry.date}T00:00:00`);
-    if (date >= start && date <= today) counts.set(entry.date, (counts.get(entry.date) || 0) + 1);
-  });
-
-  const days = [];
-  for (let index = 0; index < 365; index += 1) {
-    const date = addDays(start, index);
-    const iso = getTodayIsoDate(date);
-    days.push({ date: iso, count: counts.get(iso) || 0 });
-  }
-
-  let currentStreak = 0;
-  for (let index = days.length - 1; index >= 0 && days[index].count > 0; index -= 1) currentStreak += 1;
-
-  let bestStreak = 0;
-  let runningStreak = 0;
-  days.forEach((day) => {
-    runningStreak = day.count > 0 ? runningStreak + 1 : 0;
-    bestStreak = Math.max(bestStreak, runningStreak);
-  });
-
-  return {
-    days,
-    total: days.reduce((sum, day) => sum + day.count, 0),
-    activeDays: days.filter((day) => day.count > 0).length,
-    currentStreak,
-    bestStreak
-  };
-}
-
-function renderActivityHeatmap(days) {
-  const leadingBlanks = new Date(`${days[0].date}T00:00:00`).getDay();
-  const cells = [
-    ...Array.from({ length: leadingBlanks }, () => '<span class="activity-cell activity-cell--empty" aria-hidden="true"></span>'),
-    ...days.map((day) => {
-      const title = `${formatActivityDate(day.date)} — ${day.count} ${getTaskWord(day.count)}`;
-      return `<span class="activity-cell" data-level="${getActivityLevel(day.count)}" title="${escapeHtml(title)}" aria-label="${escapeHtml(title)}"></span>`;
-    })
-  ];
-
-  const weeks = [];
-  for (let index = 0; index < cells.length; index += 7) {
-    weeks.push(`<div class="activity-week">${cells.slice(index, index + 7).join('')}</div>`);
-  }
-  return weeks.join('');
-}
-
-function openProgressModal() {
-  const modal = document.querySelector('#progress-modal');
-  const content = document.querySelector('#progress-modal-content');
-  if (!modal || !content) return;
-  const stats = buildActivityStats();
-  content.innerHTML = `
-    <h3 class="modal__title" id="progress-modal-title">${escapeHtml(t('activity'))}</h3>
-    <div class="activity-stats">
-      <span>${escapeHtml(t('completedYear'))}: <strong>${stats.total}</strong></span>
-      <span>${escapeHtml(t('activeDays'))}: <strong>${stats.activeDays}</strong></span>
-      <span>${escapeHtml(t('currentStreak'))}: <strong>${stats.currentStreak}</strong></span>
-      <span>${escapeHtml(t('bestStreak'))}: <strong>${stats.bestStreak}</strong></span>
-    </div>
-    ${stats.total ? '' : `<p class="activity-empty">${escapeHtml(t('noCompletedTasksYet'))}</p>`}
-    <div class="activity-heatmap" role="img" aria-label="${escapeHtml(t('activity'))}">${renderActivityHeatmap(stats.days)}</div>
-  `;
-  modal.hidden = false;
-}
-
-function closeProgressModal() {
-  const modal = document.querySelector('#progress-modal');
-  if (modal) modal.hidden = true;
-}
 
 function renderAll(projects) {
   recalculateAllProgress(projects);
