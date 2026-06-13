@@ -4,6 +4,7 @@ const demoProjects = [
     title: 'Пример проекта',
     description: 'Нейтральный пример, который показывает структуру проекта, суммарные задачи, подзадачи и зависимости.',
     status: 'active',
+    colorId: '',
     progress: 0,
     lastActivityDate: '2026-06-11',
     nextAction: 'Выбрать одну доступную подзадачу или задачу и продвинуть её до следующего результата.',
@@ -183,6 +184,7 @@ const DEFAULT_THEME = 'dark';
 const AVAILABLE_THEMES = ['dark', 'light'];
 const STALLED_DAYS_THRESHOLD = 14;
 const NON_STALLED_STATUSES = ['done', 'cancelled', 'frozen'];
+const PROJECT_COLOR_IDS = ['blue', 'cyan', 'green', 'lime', 'yellow', 'orange', 'pink', 'violet'];
 
 let projects = loadProjects();
 let selectedProjectId = projects.some((project) => project.id === 'sample-project') ? 'sample-project' : projects[0]?.id || null;
@@ -196,16 +198,16 @@ const expandedGroupIds = new Set();
 
 const translations = {
   ru: {
-    appTitle: 'Проектный трекер', workspace: 'Рабочее пространство', settings: 'Настройки', settingsParams: 'Параметры', interface: 'Интерфейс', language: 'Язык интерфейса', theme: 'Оформление', darkTheme: 'Тёмная', lightTheme: 'Светлая', settingsNote: 'Выбор применяется сразу и сохраняется в браузере', themeChoice: 'Выбор темы оформления', languageChoice: 'Выбор языка интерфейса', saved: 'Сохранено', close: 'Закрыть', save: 'Сохранить', cancel: 'Отмена', delete: 'Удалить', edit: 'Редактировать', newProject: '+ Новый проект', taskAdd: '+ Задача', groupAdd: '+ Суммарная задача', editProject: 'Редактировать проект', deleteProject: 'Удалить проект', all: 'Все', started: 'Начаты', notStarted: 'Не начаты', doneFilter: 'Сделаны', task: 'Задача', projectTask: 'Задача проекта', groupTask: 'Суммарная задача', groupTasks: 'Суммарные задачи', subtask: 'Подзадача', subtasks: 'Подзадачи', subtaskAdd: '+ Подзадача', editTask: 'Редактировать задачу', editGroupTask: 'Редактировать суммарную задачу', editSubtask: 'Редактировать подзадачу', deleteTask: 'Удалить задачу', deleteGroupTask: 'Удалить суммарную задачу', deleteSubtask: 'Удалить подзадачу', title: 'Название', description: 'Описание', status: 'Статус', weight: 'Вес', note: 'Заметка', predecessors: 'Предшественники', createProject: 'Создать проект', createTask: 'Создать задачу', createGroupTask: 'Создать суммарную задачу', createSubtask: 'Создать подзадачу', newProjectTitle: 'Новый проект', newTaskTitle: 'Новая задача', newGroupTaskTitle: 'Новая суммарная задача', newSubtaskTitle: 'Новая подзадача', dataEditing: 'Редактирование данных', noStartedGroups: 'Нет начатых суммарных задач', noNotStartedTasks: 'Нет не начатых задач', noDoneTasks: 'Нет сделанных задач', noSubtasksInGroup: 'В этой суммарной задаче пока нет подзадач.', confirmDeleteProject: 'Удалить проект?', confirmDeleteTask: 'Удалить задачу?', confirmDeleteGroupTask: 'Удалить суммарную задачу?', confirmDeleteSubtask: 'Удалить подзадачу?', statusIdea: 'Идея', statusPlanned: 'Запланировано', statusActive: 'В работе', statusWaiting: 'Ждёт', statusFrozen: 'Заморожено', statusDone: 'Завершено', statusCancelled: 'Отменено', totalProgress: 'Общий прогресс', filtersAria: 'Фильтры задач проекта', projectTasksAria: 'Список задач проекта', groupTasksAria: 'Список суммарных задач проекта', collapse: 'Свернуть', expand: 'Развернуть', reorderTask: 'Изменить порядок задачи', reorderSubtask: 'Изменить порядок подзадачи', reorderGroupTask: 'Изменить порядок суммарной задачи', dependsOn: 'Зависит от: ', dependencies: 'Зависимости: ', completion: '{done} из {total} задач и подзадач', subtaskCompletion: '{done} из {total} подзадач', noProjects: 'Проектов пока нет. Нажмите «+ Новый проект» в верхней навигации, чтобы создать первый.', dependencyHint: 'Можно выбрать несколько задач этого проекта. Сама задача и очевидные циклы недоступны.', createsCycle: 'создаст цикл', projectTasksGroup: 'Задачи проекта', noOtherTasks: 'В проекте пока нет других задач', blockedMessage: 'Задача «{title}» заблокирована. Сначала завершите: {titles}.', modalCloseLabel: 'Закрыть форму'
+    appTitle: 'Проектный трекер', workspace: 'Рабочее пространство', settings: 'Настройки', settingsParams: 'Параметры', interface: 'Интерфейс', language: 'Язык интерфейса', theme: 'Оформление', darkTheme: 'Тёмная', lightTheme: 'Светлая', settingsNote: 'Выбор применяется сразу и сохраняется в браузере', themeChoice: 'Выбор темы оформления', languageChoice: 'Выбор языка интерфейса', saved: 'Сохранено', close: 'Закрыть', save: 'Сохранить', cancel: 'Отмена', delete: 'Удалить', edit: 'Редактировать', newProject: '+ Новый проект', taskAdd: '+ Задача', groupAdd: '+ Суммарная задача', editProject: 'Редактировать проект', deleteProject: 'Удалить проект', all: 'Все', started: 'Начаты', notStarted: 'Не начаты', doneFilter: 'Сделаны', task: 'Задача', projectTask: 'Задача проекта', groupTask: 'Суммарная задача', groupTasks: 'Суммарные задачи', subtask: 'Подзадача', subtasks: 'Подзадачи', subtaskAdd: '+ Подзадача', editTask: 'Редактировать задачу', editGroupTask: 'Редактировать суммарную задачу', editSubtask: 'Редактировать подзадачу', deleteTask: 'Удалить задачу', deleteGroupTask: 'Удалить суммарную задачу', deleteSubtask: 'Удалить подзадачу', title: 'Название', description: 'Описание', status: 'Статус', weight: 'Вес', note: 'Заметка', predecessors: 'Предшественники', createProject: 'Создать проект', createTask: 'Создать задачу', createGroupTask: 'Создать суммарную задачу', createSubtask: 'Создать подзадачу', newProjectTitle: 'Новый проект', newTaskTitle: 'Новая задача', newGroupTaskTitle: 'Новая суммарная задача', newSubtaskTitle: 'Новая подзадача', dataEditing: 'Редактирование данных', noStartedGroups: 'Нет начатых суммарных задач', noNotStartedTasks: 'Нет не начатых задач', noDoneTasks: 'Нет сделанных задач', noSubtasksInGroup: 'В этой суммарной задаче пока нет подзадач.', confirmDeleteProject: 'Удалить проект?', confirmDeleteTask: 'Удалить задачу?', confirmDeleteGroupTask: 'Удалить суммарную задачу?', confirmDeleteSubtask: 'Удалить подзадачу?', statusIdea: 'Идея', statusPlanned: 'Запланировано', statusActive: 'В работе', statusWaiting: 'Ждёт', statusFrozen: 'Заморожено', statusDone: 'Завершено', statusCancelled: 'Отменено', totalProgress: 'Общий прогресс', filtersAria: 'Фильтры задач проекта', projectTasksAria: 'Список задач проекта', groupTasksAria: 'Список суммарных задач проекта', collapse: 'Свернуть', expand: 'Развернуть', reorderTask: 'Изменить порядок задачи', reorderSubtask: 'Изменить порядок подзадачи', reorderGroupTask: 'Изменить порядок суммарной задачи', dependsOn: 'Зависит от: ', dependencies: 'Зависимости: ', completion: '{done} из {total} задач и подзадач', subtaskCompletion: '{done} из {total} подзадач', noProjects: 'Проектов пока нет. Нажмите «+ Новый проект» в верхней навигации, чтобы создать первый.', dependencyHint: 'Можно выбрать несколько задач этого проекта. Сама задача и очевидные циклы недоступны.', createsCycle: 'создаст цикл', projectTasksGroup: 'Задачи проекта', noOtherTasks: 'В проекте пока нет других задач', blockedMessage: 'Задача «{title}» заблокирована. Сначала завершите: {titles}.', projectColor: 'Цвет проекта', defaultColor: 'По умолчанию', colorAlreadyUsed: 'Цвет уже используется', colorBlue: 'Синий', colorCyan: 'Голубой', colorGreen: 'Зелёный', colorLime: 'Лаймовый', colorYellow: 'Жёлтый', colorOrange: 'Оранжевый', colorPink: 'Розовый', colorViolet: 'Фиолетовый', modalCloseLabel: 'Закрыть форму'
   },
   en: {
-    appTitle: 'Project tracker', workspace: 'Workspace', settings: 'Settings', settingsParams: 'Preferences', interface: 'Interface', language: 'Interface language', theme: 'Appearance', darkTheme: 'Dark', lightTheme: 'Light', settingsNote: 'The choice is applied immediately and saved in the browser', themeChoice: 'Theme selection', languageChoice: 'Interface language selection', saved: 'Saved', close: 'Close', save: 'Save', cancel: 'Cancel', delete: 'Delete', edit: 'Edit', newProject: '+ New project', taskAdd: '+ Task', groupAdd: '+ Summary task', editProject: 'Edit project', deleteProject: 'Delete project', all: 'All', started: 'Started', notStarted: 'Not started', doneFilter: 'Done', task: 'Task', projectTask: 'Project task', groupTask: 'Summary task', groupTasks: 'Summary tasks', subtask: 'Subtask', subtasks: 'Subtasks', subtaskAdd: '+ Subtask', editTask: 'Edit task', editGroupTask: 'Edit summary task', editSubtask: 'Edit subtask', deleteTask: 'Delete task', deleteGroupTask: 'Delete summary task', deleteSubtask: 'Delete subtask', title: 'Title', description: 'Description', status: 'Status', weight: 'Weight', note: 'Note', predecessors: 'Predecessors', createProject: 'Create project', createTask: 'Create task', createGroupTask: 'Create summary task', createSubtask: 'Create subtask', newProjectTitle: 'New project', newTaskTitle: 'New task', newGroupTaskTitle: 'New summary task', newSubtaskTitle: 'New subtask', dataEditing: 'Data editing', noStartedGroups: 'No started summary tasks', noNotStartedTasks: 'No not started tasks', noDoneTasks: 'No done tasks', noSubtasksInGroup: 'This summary task has no subtasks yet.', confirmDeleteProject: 'Delete project?', confirmDeleteTask: 'Delete task?', confirmDeleteGroupTask: 'Delete summary task?', confirmDeleteSubtask: 'Delete subtask?', statusIdea: 'Idea', statusPlanned: 'Planned', statusActive: 'Active', statusWaiting: 'Waiting', statusFrozen: 'Frozen', statusDone: 'Done', statusCancelled: 'Cancelled', totalProgress: 'Total progress', filtersAria: 'Project task filters', projectTasksAria: 'Project task list', groupTasksAria: 'Project summary task list', collapse: 'Collapse', expand: 'Expand', reorderTask: 'Change task order', reorderSubtask: 'Change subtask order', reorderGroupTask: 'Change summary task order', dependsOn: 'Depends on: ', dependencies: 'Dependencies: ', completion: '{done} of {total} tasks and subtasks', subtaskCompletion: '{done} of {total} subtasks', noProjects: 'There are no projects yet. Click “+ New project” in the top navigation to create the first one.', dependencyHint: 'You can select several tasks in this project. The task itself and obvious cycles are unavailable.', createsCycle: 'creates a cycle', projectTasksGroup: 'Project tasks', noOtherTasks: 'There are no other tasks in this project yet', blockedMessage: 'Task “{title}” is blocked. Complete first: {titles}.', modalCloseLabel: 'Close form'
+    appTitle: 'Project tracker', workspace: 'Workspace', settings: 'Settings', settingsParams: 'Preferences', interface: 'Interface', language: 'Interface language', theme: 'Appearance', darkTheme: 'Dark', lightTheme: 'Light', settingsNote: 'The choice is applied immediately and saved in the browser', themeChoice: 'Theme selection', languageChoice: 'Interface language selection', saved: 'Saved', close: 'Close', save: 'Save', cancel: 'Cancel', delete: 'Delete', edit: 'Edit', newProject: '+ New project', taskAdd: '+ Task', groupAdd: '+ Summary task', editProject: 'Edit project', deleteProject: 'Delete project', all: 'All', started: 'Started', notStarted: 'Not started', doneFilter: 'Done', task: 'Task', projectTask: 'Project task', groupTask: 'Summary task', groupTasks: 'Summary tasks', subtask: 'Subtask', subtasks: 'Subtasks', subtaskAdd: '+ Subtask', editTask: 'Edit task', editGroupTask: 'Edit summary task', editSubtask: 'Edit subtask', deleteTask: 'Delete task', deleteGroupTask: 'Delete summary task', deleteSubtask: 'Delete subtask', title: 'Title', description: 'Description', status: 'Status', weight: 'Weight', note: 'Note', predecessors: 'Predecessors', createProject: 'Create project', createTask: 'Create task', createGroupTask: 'Create summary task', createSubtask: 'Create subtask', newProjectTitle: 'New project', newTaskTitle: 'New task', newGroupTaskTitle: 'New summary task', newSubtaskTitle: 'New subtask', dataEditing: 'Data editing', noStartedGroups: 'No started summary tasks', noNotStartedTasks: 'No not started tasks', noDoneTasks: 'No done tasks', noSubtasksInGroup: 'This summary task has no subtasks yet.', confirmDeleteProject: 'Delete project?', confirmDeleteTask: 'Delete task?', confirmDeleteGroupTask: 'Delete summary task?', confirmDeleteSubtask: 'Delete subtask?', statusIdea: 'Idea', statusPlanned: 'Planned', statusActive: 'Active', statusWaiting: 'Waiting', statusFrozen: 'Frozen', statusDone: 'Done', statusCancelled: 'Cancelled', totalProgress: 'Total progress', filtersAria: 'Project task filters', projectTasksAria: 'Project task list', groupTasksAria: 'Project summary task list', collapse: 'Collapse', expand: 'Expand', reorderTask: 'Change task order', reorderSubtask: 'Change subtask order', reorderGroupTask: 'Change summary task order', dependsOn: 'Depends on: ', dependencies: 'Dependencies: ', completion: '{done} of {total} tasks and subtasks', subtaskCompletion: '{done} of {total} subtasks', noProjects: 'There are no projects yet. Click “+ New project” in the top navigation to create the first one.', dependencyHint: 'You can select several tasks in this project. The task itself and obvious cycles are unavailable.', createsCycle: 'creates a cycle', projectTasksGroup: 'Project tasks', noOtherTasks: 'There are no other tasks in this project yet', blockedMessage: 'Task “{title}” is blocked. Complete first: {titles}.', projectColor: 'Project color', defaultColor: 'Default', colorAlreadyUsed: 'Color already used', colorBlue: 'Blue', colorCyan: 'Cyan', colorGreen: 'Green', colorLime: 'Lime', colorYellow: 'Yellow', colorOrange: 'Orange', colorPink: 'Pink', colorViolet: 'Violet', modalCloseLabel: 'Close form'
   },
   es: {
-    appTitle: 'Rastreador de proyectos', workspace: 'Espacio de trabajo', settings: 'Configuración', settingsParams: 'Parámetros', interface: 'Interfaz', language: 'Idioma de la interfaz', theme: 'Apariencia', darkTheme: 'Oscura', lightTheme: 'Clara', settingsNote: 'La selección se aplica al instante y se guarda en el navegador', themeChoice: 'Selección de tema', languageChoice: 'Selección de idioma de la interfaz', saved: 'Guardado', close: 'Cerrar', save: 'Guardar', cancel: 'Cancelar', delete: 'Eliminar', edit: 'Editar', newProject: '+ Nuevo proyecto', taskAdd: '+ Tarea', groupAdd: '+ Tarea resumen', editProject: 'Editar proyecto', deleteProject: 'Eliminar proyecto', all: 'Todas', started: 'Iniciadas', notStarted: 'No iniciadas', doneFilter: 'Hechas', task: 'Tarea', projectTask: 'Tarea del proyecto', groupTask: 'Tarea resumen', groupTasks: 'Tareas resumen', subtask: 'Subtarea', subtasks: 'Subtareas', subtaskAdd: '+ Subtarea', editTask: 'Editar tarea', editGroupTask: 'Editar tarea resumen', editSubtask: 'Editar subtarea', deleteTask: 'Eliminar tarea', deleteGroupTask: 'Eliminar tarea resumen', deleteSubtask: 'Eliminar subtarea', title: 'Título', description: 'Descripción', status: 'Estado', weight: 'Peso', note: 'Nota', predecessors: 'Predecesoras', createProject: 'Crear proyecto', createTask: 'Crear tarea', createGroupTask: 'Crear tarea resumen', createSubtask: 'Crear subtarea', newProjectTitle: 'Nuevo proyecto', newTaskTitle: 'Nueva tarea', newGroupTaskTitle: 'Nueva tarea resumen', newSubtaskTitle: 'Nueva subtarea', dataEditing: 'Edición de datos', noStartedGroups: 'No hay tareas resumen iniciadas', noNotStartedTasks: 'No hay tareas no iniciadas', noDoneTasks: 'No hay tareas hechas', noSubtasksInGroup: 'Esta tarea resumen aún no tiene subtareas.', confirmDeleteProject: '¿Eliminar proyecto?', confirmDeleteTask: '¿Eliminar tarea?', confirmDeleteGroupTask: '¿Eliminar tarea resumen?', confirmDeleteSubtask: '¿Eliminar subtarea?', statusIdea: 'Idea', statusPlanned: 'Planificado', statusActive: 'En curso', statusWaiting: 'En espera', statusFrozen: 'Congelado', statusDone: 'Completado', statusCancelled: 'Cancelado', totalProgress: 'Progreso total', filtersAria: 'Filtros de tareas del proyecto', projectTasksAria: 'Lista de tareas del proyecto', groupTasksAria: 'Lista de tareas resumen del proyecto', collapse: 'Contraer', expand: 'Expandir', reorderTask: 'Cambiar orden de la tarea', reorderSubtask: 'Cambiar orden de la subtarea', reorderGroupTask: 'Cambiar orden de la tarea resumen', dependsOn: 'Depende de: ', dependencies: 'Dependencias: ', completion: '{done} de {total} tareas y subtareas', subtaskCompletion: '{done} de {total} subtareas', noProjects: 'Todavía no hay proyectos. Haz clic en “+ Nuevo proyecto” en la navegación superior para crear el primero.', dependencyHint: 'Puedes seleccionar varias tareas de este proyecto. La propia tarea y los ciclos evidentes no están disponibles.', createsCycle: 'crea un ciclo', projectTasksGroup: 'Tareas del proyecto', noOtherTasks: 'Todavía no hay otras tareas en este proyecto', blockedMessage: 'La tarea “{title}” está bloqueada. Completa primero: {titles}.', modalCloseLabel: 'Cerrar formulario'
+    appTitle: 'Rastreador de proyectos', workspace: 'Espacio de trabajo', settings: 'Configuración', settingsParams: 'Parámetros', interface: 'Interfaz', language: 'Idioma de la interfaz', theme: 'Apariencia', darkTheme: 'Oscura', lightTheme: 'Clara', settingsNote: 'La selección se aplica al instante y se guarda en el navegador', themeChoice: 'Selección de tema', languageChoice: 'Selección de idioma de la interfaz', saved: 'Guardado', close: 'Cerrar', save: 'Guardar', cancel: 'Cancelar', delete: 'Eliminar', edit: 'Editar', newProject: '+ Nuevo proyecto', taskAdd: '+ Tarea', groupAdd: '+ Tarea resumen', editProject: 'Editar proyecto', deleteProject: 'Eliminar proyecto', all: 'Todas', started: 'Iniciadas', notStarted: 'No iniciadas', doneFilter: 'Hechas', task: 'Tarea', projectTask: 'Tarea del proyecto', groupTask: 'Tarea resumen', groupTasks: 'Tareas resumen', subtask: 'Subtarea', subtasks: 'Subtareas', subtaskAdd: '+ Subtarea', editTask: 'Editar tarea', editGroupTask: 'Editar tarea resumen', editSubtask: 'Editar subtarea', deleteTask: 'Eliminar tarea', deleteGroupTask: 'Eliminar tarea resumen', deleteSubtask: 'Eliminar subtarea', title: 'Título', description: 'Descripción', status: 'Estado', weight: 'Peso', note: 'Nota', predecessors: 'Predecesoras', createProject: 'Crear proyecto', createTask: 'Crear tarea', createGroupTask: 'Crear tarea resumen', createSubtask: 'Crear subtarea', newProjectTitle: 'Nuevo proyecto', newTaskTitle: 'Nueva tarea', newGroupTaskTitle: 'Nueva tarea resumen', newSubtaskTitle: 'Nueva subtarea', dataEditing: 'Edición de datos', noStartedGroups: 'No hay tareas resumen iniciadas', noNotStartedTasks: 'No hay tareas no iniciadas', noDoneTasks: 'No hay tareas hechas', noSubtasksInGroup: 'Esta tarea resumen aún no tiene subtareas.', confirmDeleteProject: '¿Eliminar proyecto?', confirmDeleteTask: '¿Eliminar tarea?', confirmDeleteGroupTask: '¿Eliminar tarea resumen?', confirmDeleteSubtask: '¿Eliminar subtarea?', statusIdea: 'Idea', statusPlanned: 'Planificado', statusActive: 'En curso', statusWaiting: 'En espera', statusFrozen: 'Congelado', statusDone: 'Completado', statusCancelled: 'Cancelado', totalProgress: 'Progreso total', filtersAria: 'Filtros de tareas del proyecto', projectTasksAria: 'Lista de tareas del proyecto', groupTasksAria: 'Lista de tareas resumen del proyecto', collapse: 'Contraer', expand: 'Expandir', reorderTask: 'Cambiar orden de la tarea', reorderSubtask: 'Cambiar orden de la subtarea', reorderGroupTask: 'Cambiar orden de la tarea resumen', dependsOn: 'Depende de: ', dependencies: 'Dependencias: ', completion: '{done} de {total} tareas y subtareas', subtaskCompletion: '{done} de {total} subtareas', noProjects: 'Todavía no hay proyectos. Haz clic en “+ Nuevo proyecto” en la navegación superior para crear el primero.', dependencyHint: 'Puedes seleccionar varias tareas de este proyecto. La propia tarea y los ciclos evidentes no están disponibles.', createsCycle: 'crea un ciclo', projectTasksGroup: 'Tareas del proyecto', noOtherTasks: 'Todavía no hay otras tareas en este proyecto', blockedMessage: 'La tarea “{title}” está bloqueada. Completa primero: {titles}.', projectColor: 'Color del proyecto', defaultColor: 'Predeterminado', colorAlreadyUsed: 'Color ya en uso', colorBlue: 'Azul', colorCyan: 'Cian', colorGreen: 'Verde', colorLime: 'Lima', colorYellow: 'Amarillo', colorOrange: 'Naranja', colorPink: 'Rosa', colorViolet: 'Violeta', modalCloseLabel: 'Cerrar formulario'
   },
   zh: {
-    appTitle: '项目跟踪器', workspace: '工作区', settings: '设置', settingsParams: '参数', interface: '界面', language: '界面语言', theme: '外观', darkTheme: '深色', lightTheme: '浅色', settingsNote: '选择会立即应用并保存在浏览器中', themeChoice: '主题选择', languageChoice: '界面语言选择', saved: '已保存', close: '关闭', save: '保存', cancel: '取消', delete: '删除', edit: '编辑', newProject: '+ 新项目', taskAdd: '+ 任务', groupAdd: '+ 汇总任务', editProject: '编辑项目', deleteProject: '删除项目', all: '全部', started: '已开始', notStarted: '未开始', doneFilter: '已完成', task: '任务', projectTask: '项目任务', groupTask: '汇总任务', groupTasks: '汇总任务', subtask: '子任务', subtasks: '子任务', subtaskAdd: '+ 子任务', editTask: '编辑任务', editGroupTask: '编辑汇总任务', editSubtask: '编辑子任务', deleteTask: '删除任务', deleteGroupTask: '删除汇总任务', deleteSubtask: '删除子任务', title: '名称', description: '描述', status: '状态', weight: '权重', note: '备注', predecessors: '前置任务', createProject: '创建项目', createTask: '创建任务', createGroupTask: '创建汇总任务', createSubtask: '创建子任务', newProjectTitle: '新项目', newTaskTitle: '新任务', newGroupTaskTitle: '新汇总任务', newSubtaskTitle: '新子任务', dataEditing: '数据编辑', noStartedGroups: '没有已开始的汇总任务', noNotStartedTasks: '没有未开始的任务', noDoneTasks: '没有已完成的任务', noSubtasksInGroup: '这个汇总任务还没有子任务。', confirmDeleteProject: '删除项目？', confirmDeleteTask: '删除任务？', confirmDeleteGroupTask: '删除汇总任务？', confirmDeleteSubtask: '删除子任务？', statusIdea: '想法', statusPlanned: '已计划', statusActive: '进行中', statusWaiting: '等待中', statusFrozen: '已冻结', statusDone: '已完成', statusCancelled: '已取消', totalProgress: '总进度', filtersAria: '项目任务筛选器', projectTasksAria: '项目任务列表', groupTasksAria: '项目汇总任务列表', collapse: '折叠', expand: '展开', reorderTask: '更改任务顺序', reorderSubtask: '更改子任务顺序', reorderGroupTask: '更改汇总任务顺序', dependsOn: '依赖于：', dependencies: '依赖关系：', completion: '{done}/{total} 个任务和子任务', subtaskCompletion: '{done}/{total} 个子任务', noProjects: '还没有项目。点击顶部导航中的“+ 新项目”创建第一个项目。', dependencyHint: '可以选择此项目中的多个任务。任务本身和明显循环不可选。', createsCycle: '会形成循环', projectTasksGroup: '项目任务', noOtherTasks: '此项目还没有其他任务', blockedMessage: '任务“{title}”被阻塞。请先完成：{titles}。', modalCloseLabel: '关闭表单'
+    appTitle: '项目跟踪器', workspace: '工作区', settings: '设置', settingsParams: '参数', interface: '界面', language: '界面语言', theme: '外观', darkTheme: '深色', lightTheme: '浅色', settingsNote: '选择会立即应用并保存在浏览器中', themeChoice: '主题选择', languageChoice: '界面语言选择', saved: '已保存', close: '关闭', save: '保存', cancel: '取消', delete: '删除', edit: '编辑', newProject: '+ 新项目', taskAdd: '+ 任务', groupAdd: '+ 汇总任务', editProject: '编辑项目', deleteProject: '删除项目', all: '全部', started: '已开始', notStarted: '未开始', doneFilter: '已完成', task: '任务', projectTask: '项目任务', groupTask: '汇总任务', groupTasks: '汇总任务', subtask: '子任务', subtasks: '子任务', subtaskAdd: '+ 子任务', editTask: '编辑任务', editGroupTask: '编辑汇总任务', editSubtask: '编辑子任务', deleteTask: '删除任务', deleteGroupTask: '删除汇总任务', deleteSubtask: '删除子任务', title: '名称', description: '描述', status: '状态', weight: '权重', note: '备注', predecessors: '前置任务', createProject: '创建项目', createTask: '创建任务', createGroupTask: '创建汇总任务', createSubtask: '创建子任务', newProjectTitle: '新项目', newTaskTitle: '新任务', newGroupTaskTitle: '新汇总任务', newSubtaskTitle: '新子任务', dataEditing: '数据编辑', noStartedGroups: '没有已开始的汇总任务', noNotStartedTasks: '没有未开始的任务', noDoneTasks: '没有已完成的任务', noSubtasksInGroup: '这个汇总任务还没有子任务。', confirmDeleteProject: '删除项目？', confirmDeleteTask: '删除任务？', confirmDeleteGroupTask: '删除汇总任务？', confirmDeleteSubtask: '删除子任务？', statusIdea: '想法', statusPlanned: '已计划', statusActive: '进行中', statusWaiting: '等待中', statusFrozen: '已冻结', statusDone: '已完成', statusCancelled: '已取消', totalProgress: '总进度', filtersAria: '项目任务筛选器', projectTasksAria: '项目任务列表', groupTasksAria: '项目汇总任务列表', collapse: '折叠', expand: '展开', reorderTask: '更改任务顺序', reorderSubtask: '更改子任务顺序', reorderGroupTask: '更改汇总任务顺序', dependsOn: '依赖于：', dependencies: '依赖关系：', completion: '{done}/{total} 个任务和子任务', subtaskCompletion: '{done}/{total} 个子任务', noProjects: '还没有项目。点击顶部导航中的“+ 新项目”创建第一个项目。', dependencyHint: '可以选择此项目中的多个任务。任务本身和明显循环不可选。', createsCycle: '会形成循环', projectTasksGroup: '项目任务', noOtherTasks: '此项目还没有其他任务', blockedMessage: '任务“{title}”被阻塞。请先完成：{titles}。', projectColor: '项目颜色', defaultColor: '默认', colorAlreadyUsed: '颜色已被使用', colorBlue: '蓝色', colorCyan: '青色', colorGreen: '绿色', colorLime: '青柠色', colorYellow: '黄色', colorOrange: '橙色', colorPink: '粉色', colorViolet: '紫色', modalCloseLabel: '关闭表单'
   }
 };
 
@@ -319,11 +321,65 @@ function getLatestDate(...dateValues) {
     .sort((first, second) => new Date(second) - new Date(first))[0] || getTodayIsoDate();
 }
 
+
+function normalizeProjectColor(colorId) {
+  return PROJECT_COLOR_IDS.includes(colorId) ? colorId : '';
+}
+
+function getUsedProjectColors(exceptProjectId = '') {
+  return new Set(projects
+    .filter((project) => project.id !== exceptProjectId)
+    .map((project) => normalizeProjectColor(project.colorId))
+    .filter(Boolean));
+}
+
+function isProjectColorAvailable(colorId, projectId = '') {
+  const normalizedColor = normalizeProjectColor(colorId);
+  return !normalizedColor || !getUsedProjectColors(projectId).has(normalizedColor);
+}
+
+function getProjectColorName(colorId) {
+  return t(`color${colorId.charAt(0).toUpperCase()}${colorId.slice(1)}`);
+}
+
+function renderProjectColorPicker(selectedColorId = '', projectId = '') {
+  const selectedColor = normalizeProjectColor(selectedColorId);
+  const usedColors = getUsedProjectColors(projectId);
+  const defaultChecked = !selectedColor ? 'checked' : '';
+  const colorButtons = PROJECT_COLOR_IDS.map((colorId) => {
+    const isSelected = selectedColor === colorId;
+    const isDisabled = usedColors.has(colorId) && !isSelected;
+    const label = getProjectColorName(colorId);
+    const disabledText = isDisabled ? ` ${t('colorAlreadyUsed')}` : '';
+
+    return `
+      <label class="project-color-option project-color-option--${escapeHtml(colorId)} ${isDisabled ? 'project-color-option--disabled' : ''}" title="${escapeHtml(label + disabledText)}">
+        <input type="radio" name="colorId" value="${escapeHtml(colorId)}" ${isSelected ? 'checked' : ''} ${isDisabled ? 'disabled' : ''} aria-label="${escapeHtml(label + disabledText)}">
+        <span class="project-color-option__swatch" aria-hidden="true"></span>
+      </label>
+    `;
+  }).join('');
+
+  return `
+    <fieldset class="project-color-picker">
+      <legend>${escapeHtml(t('projectColor'))}</legend>
+      <label class="project-color-option project-color-option--default">
+        <input type="radio" name="colorId" value="" ${defaultChecked} aria-label="${escapeHtml(t('defaultColor'))}">
+        <span>${escapeHtml(t('defaultColor'))}</span>
+      </label>
+      <div class="project-color-picker__palette">
+        ${colorButtons}
+      </div>
+    </fieldset>
+  `;
+}
+
 function normalizeProjects(projectList) {
   return projectList.map((project) => {
     project.groups = project.groups || [];
     project.tasks = project.tasks || [];
     project.lastActivityDate = project.lastActivityDate || getTodayIsoDate();
+    project.colorId = normalizeProjectColor(project.colorId);
 
     project.tasks.forEach((task) => {
       task.dependsOn = task.dependsOn || [];
@@ -523,6 +579,7 @@ function renderProjectForm(project = {}) {
       <label>${escapeHtml(t('title'))}<input name="title" required maxlength="80" value="${escapeHtml(project.title || '')}"></label>
       <label>${escapeHtml(t('status'))}<select name="status">${getStatusOptions(project.status || 'planned')}</select></label>
       <label>${escapeHtml(t('description'))}<textarea name="description" rows="3">${escapeHtml(project.description || '')}</textarea></label>
+      ${renderProjectColorPicker(project.colorId || '', project.id || '')}
       <div class="entity-form__danger">
         ${deleteButton}
       </div>
@@ -999,7 +1056,7 @@ function renderProjectTabs(projects) {
     const isSelected = project.id === selectedProjectId;
 
     return `
-      <button class="menu__item project-tabs__item ${isSelected ? 'menu__item--active' : ''}" type="button" data-project-tab-id="${escapeHtml(project.id)}" aria-pressed="${isSelected}" title="${escapeHtml(project.title)}">
+      <button class="menu__item project-tabs__item ${project.colorId ? `project-tabs__item--color project-color-${escapeHtml(project.colorId)}` : ''} ${isSelected ? 'menu__item--active' : ''}" type="button" data-project-tab-id="${escapeHtml(project.id)}" aria-pressed="${isSelected}" title="${escapeHtml(project.title)}">
         <span class="project-tabs__title">${escapeHtml(project.title)}</span>
       </button>
     `;
@@ -1010,6 +1067,40 @@ function renderProjectTabs(projects) {
     <button class="menu__item project-tabs__item project-tabs__item--create" type="button" data-action="create-project">${escapeHtml(t('newProject'))}</button>
     <button class="menu__item project-tabs__settings" type="button" data-section-link="settings" aria-label="${escapeHtml(t('settings'))}" title="${escapeHtml(t('settings'))}">⚙</button>
   `;
+
+  initializeProjectTabsSortable(tabs);
+}
+
+
+let projectTabDragJustEnded = false;
+
+function initializeProjectTabsSortable(tabs) {
+  if (!tabs || typeof Sortable === 'undefined') return;
+
+  Sortable.create(tabs, {
+    animation: 150,
+    draggable: '.project-tabs__item:not(.project-tabs__item--create)',
+    filter: '.project-tabs__item--create, .project-tabs__settings',
+    preventOnFilter: false,
+    delayOnTouchOnly: true,
+    delay: 220,
+    touchStartThreshold: 5,
+    ghostClass: 'project-tabs__item--ghost',
+    chosenClass: 'project-tabs__item--chosen',
+    dragClass: 'project-tabs__item--drag',
+    onEnd: () => {
+      const orderedIds = Array.from(tabs.querySelectorAll('[data-project-tab-id]')).map((item) => item.dataset.projectTabId);
+      const orderedIdSet = new Set(orderedIds);
+      projects = [
+        ...orderedIds.map((id) => findProject(id)).filter(Boolean),
+        ...projects.filter((project) => !orderedIdSet.has(project.id))
+      ];
+      projectTabDragJustEnded = true;
+      window.setTimeout(() => { projectTabDragJustEnded = false; }, 0);
+      persistProjects();
+      renderAll(projects);
+    }
+  });
 }
 
 function selectProject(projectId) {
@@ -1090,8 +1181,12 @@ function saveProject(form) {
   if (!title) return;
 
   const project = projectId ? findProject(projectId) : null;
+  const requestedColorId = normalizeProjectColor(formData.get('colorId') || '');
+  const colorId = isProjectColorAvailable(requestedColorId, projectId) ? requestedColorId : '';
+
   const data = {
     title,
+    colorId,
     status: formData.get('status') || 'planned',
     description: String(formData.get('description') || '').trim(),
     lastActivityDate: getTodayIsoDate()
@@ -1374,6 +1469,7 @@ function setupEntityControls() {
     const projectTab = event.target.closest('[data-project-tab-id]');
     if (projectTab) {
       event.preventDefault();
+      if (projectTabDragJustEnded) return;
       selectProject(projectTab.dataset.projectTabId);
       return;
     }
@@ -1738,7 +1834,7 @@ function renderSelectedProject(projects) {
   const filterEmptyText = !hasProjectTasks && !hasGroups ? getProjectFilterEmptyText(activeFilter) : '';
 
   details.innerHTML = `
-    <article class="project-workspace__hero">
+    <article class="project-workspace__hero ${project.colorId ? `project-workspace__hero--color project-color-${escapeHtml(project.colorId)}` : ''}">
       <div class="project-workspace__main">
         <div class="project-workspace__title-row">
           <div>
