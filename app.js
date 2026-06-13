@@ -1377,8 +1377,9 @@ function toggleTaskGroup(groupId) {
 function getProjectFilterOptions() {
   return [
     { id: 'all', label: 'Все' },
-    { id: 'next', label: 'Следующие' },
-    { id: 'stalled', label: 'Зависшие' }
+    { id: 'started', label: 'Начаты' },
+    { id: 'not-started', label: 'Не начаты' },
+    { id: 'done', label: 'Сделаны' }
   ];
 }
 
@@ -1390,50 +1391,74 @@ function getStalledProjectEntries(project) {
   return getStalledItems([project]).filter((entry) => entry.type !== 'project');
 }
 
+function isTaskDone(task) {
+  return task?.status === 'done';
+}
+
+function isGroupProgressStarted(group) {
+  const progress = clampProgress(group?.progress);
+  return progress > 0 && progress < 100;
+}
+
+function isGroupProgressNotStarted(group) {
+  return clampProgress(group?.progress) === 0;
+}
+
+function isGroupProgressDone(group) {
+  return clampProgress(group?.progress) === 100;
+}
+
 function getFilteredProjectTasks(project, taskLookup, filter) {
   const tasks = project.tasks || [];
 
-  if (filter === 'next') {
-    return tasks.filter((task) => isTaskAvailable(task, project, taskLookup));
+  if (filter === 'started') {
+    return [];
   }
 
-  if (filter === 'stalled') {
-    const stalledTasks = new Set(getStalledProjectEntries(project)
-      .filter((entry) => entry.type === 'project-task')
-      .map((entry) => entry.task.id));
+  if (filter === 'not-started') {
+    return tasks.filter((task) => !isTaskDone(task));
+  }
 
-    return tasks.filter((task) => stalledTasks.has(task.id));
+  if (filter === 'done') {
+    return tasks.filter(isTaskDone);
   }
 
   return tasks;
 }
 
 function getFilteredGroups(project, taskLookup, filter) {
-  if (filter === 'next') {
-    return (project.groups || []).map((group) => ({
+  if (filter === 'started') {
+    return (project.groups || []).filter(isGroupProgressStarted).map((group) => ({
       group,
-      tasks: (group.tasks || []).filter((task) => isTaskAvailable(task, project, taskLookup)),
-      isStalledGroup: false
-    })).filter((entry) => entry.tasks.length);
+      tasks: group.tasks || []
+    }));
   }
 
-  if (filter === 'stalled') {
-    const stalledEntries = getStalledProjectEntries(project);
-    const stalledGroups = new Set(stalledEntries.filter((entry) => entry.type === 'group').map((entry) => entry.group.id));
-    const stalledTasks = new Set(stalledEntries.filter((entry) => entry.type === 'task').map((entry) => entry.task.id));
-
-    return (project.groups || []).map((group) => ({
+  if (filter === 'not-started') {
+    return (project.groups || []).filter(isGroupProgressNotStarted).map((group) => ({
       group,
-      tasks: (group.tasks || []).filter((task) => stalledTasks.has(task.id)),
-      isStalledGroup: stalledGroups.has(group.id)
-    })).filter((entry) => entry.isStalledGroup || entry.tasks.length);
+      tasks: (group.tasks || []).filter((task) => !isTaskDone(task))
+    }));
+  }
+
+  if (filter === 'done') {
+    return (project.groups || []).filter(isGroupProgressDone).map((group) => ({
+      group,
+      tasks: (group.tasks || []).filter(isTaskDone)
+    }));
   }
 
   return (project.groups || []).map((group) => ({
     group,
-    tasks: group.tasks || [],
-    isStalledGroup: false
+    tasks: group.tasks || []
   }));
+}
+
+function getProjectFilterEmptyText(filter) {
+  if (filter === 'started') return 'Нет начатых суммарных задач';
+  if (filter === 'not-started') return 'Нет не начатых задач';
+  if (filter === 'done') return 'Нет сделанных задач';
+  return '';
 }
 
 function renderProjectFilterBar(activeFilter) {
@@ -1580,6 +1605,7 @@ function renderSelectedProject(projects) {
     : '';
   const hasProjectTasks = Boolean(projectTasksHtml);
   const hasGroups = Boolean(groupsHtml);
+  const filterEmptyText = !hasProjectTasks && !hasGroups ? getProjectFilterEmptyText(activeFilter) : '';
 
   details.innerHTML = `
     <article class="project-workspace__hero">
@@ -1625,6 +1651,8 @@ function renderSelectedProject(projects) {
         </div>
       </section>
     ` : ''}
+
+    ${filterEmptyText ? `<div class="empty-section empty-section--compact">${escapeHtml(filterEmptyText)}</div>` : ''}
   `;
 
   initializeProjectSortables(details, project);
@@ -1672,7 +1700,7 @@ function renderTaskGroup(group, taskLookup, projectId, visibleTasks, options = {
   const tasks = visibleTasks || group.tasks || [];
   const allTasks = group.tasks || [];
   const completion = getTaskCompletionStats(allTasks);
-  const emptyText = options.isStalledGroup ? 'Суммарная задача без движения 14+ дней' : 'В этой суммарной задаче пока нет подзадач.';
+  const emptyText = 'В этой суммарной задаче пока нет подзадач.';
   const groupStateId = `${projectId}::${group.id}`;
   const isExpanded = expandedGroupIds.has(groupStateId);
   const taskListId = `task-group-tasks-${projectId}-${group.id}`;
