@@ -3808,3 +3808,176 @@ body {
     font-size: 0.92rem;
   }
 }
+
+/* Project color palette and project-tab sorting */
+:root,
+[data-theme="dark"] {
+  --project-blue-tab: #2f6fd8;
+  --project-cyan-tab: #087f96;
+  --project-green-tab: #10895f;
+  --project-lime-tab: #5d8f18;
+  --project-yellow-tab: #a77909;
+  --project-orange-tab: #b75c12;
+  --project-pink-tab: #b43d78;
+  --project-violet-tab: #7448c7;
+  --project-tab-text: #ffffff;
+  --project-blue-soft: rgba(47, 111, 216, 0.16);
+  --project-cyan-soft: rgba(8, 127, 150, 0.16);
+  --project-green-soft: rgba(16, 137, 95, 0.16);
+  --project-lime-soft: rgba(93, 143, 24, 0.16);
+  --project-yellow-soft: rgba(167, 121, 9, 0.16);
+  --project-orange-soft: rgba(183, 92, 18, 0.16);
+  --project-pink-soft: rgba(180, 61, 120, 0.16);
+  --project-violet-soft: rgba(116, 72, 199, 0.16);
+}
+
+[data-theme="light"] {
+  --project-blue-tab: #2563eb;
+  --project-cyan-tab: #0789a8;
+  --project-green-tab: #0f8f63;
+  --project-lime-tab: #63890f;
+  --project-yellow-tab: #b77905;
+  --project-orange-tab: #c65f12;
+  --project-pink-tab: #c7357f;
+  --project-violet-tab: #7c3aed;
+  --project-tab-text: #ffffff;
+  --project-blue-soft: rgba(37, 99, 235, 0.11);
+  --project-cyan-soft: rgba(7, 137, 168, 0.11);
+  --project-green-soft: rgba(15, 143, 99, 0.11);
+  --project-lime-soft: rgba(99, 137, 15, 0.12);
+  --project-yellow-soft: rgba(183, 121, 5, 0.13);
+  --project-orange-soft: rgba(198, 95, 18, 0.12);
+  --project-pink-soft: rgba(199, 53, 127, 0.11);
+  --project-violet-soft: rgba(124, 58, 237, 0.11);
+}
+
+.project-color-blue,
+.project-color-option--blue { --project-tab-bg: var(--project-blue-tab); --project-soft-bg: var(--project-blue-soft); }
+.project-color-cyan,
+.project-color-option--cyan { --project-tab-bg: var(--project-cyan-tab); --project-soft-bg: var(--project-cyan-soft); }
+.project-color-green,
+.project-color-option--green { --project-tab-bg: var(--project-green-tab); --project-soft-bg: var(--project-green-soft); }
+.project-color-lime,
+.project-color-option--lime { --project-tab-bg: var(--project-lime-tab); --project-soft-bg: var(--project-lime-soft); }
+.project-color-yellow,
+.project-color-option--yellow { --project-tab-bg: var(--project-yellow-tab); --project-soft-bg: var(--project-yellow-soft); }
+.project-color-orange,
+.project-color-option--orange { --project-tab-bg: var(--project-orange-tab); --project-soft-bg: var(--project-orange-soft); }
+.project-color-pink,
+.project-color-option--pink { --project-tab-bg: var(--project-pink-tab); --project-soft-bg: var(--project-pink-soft); }
+.project-color-violet,
+.project-color-option--violet { --project-tab-bg: var(--project-violet-tab); --project-soft-bg: var(--project-violet-soft); }
+
+.project-tabs__item--color {
+  background: color-mix(in srgb, var(--project-tab-bg) 82%, var(--surface) 18%);
+  border-color: color-mix(in srgb, var(--project-tab-bg) 68%, transparent);
+  color: var(--project-tab-text);
+  box-shadow: inset 0 -1px 0 rgba(255, 255, 255, 0.16);
+  touch-action: pan-x;
+}
+
+.project-tabs__item--color:hover,
+.project-tabs__item--color.menu__item--active {
+  background: var(--project-tab-bg);
+  border-color: color-mix(in srgb, var(--project-tab-bg) 72%, #ffffff 28%);
+  color: var(--project-tab-text);
+}
+
+.project-tabs__item--color.menu__item--active {
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--project-tab-bg) 45%, #ffffff 55%), 0 10px 24px color-mix(in srgb, var(--project-tab-bg) 28%, transparent);
+}
+
+.project-tabs__item--ghost {
+  opacity: 0.45;
+}
+
+.project-tabs__item--chosen,
+.project-tabs__item--drag {
+  cursor: grabbing;
+  transform: translateY(-1px);
+}
+
+.project-workspace__hero--color {
+  background:
+    linear-gradient(135deg, var(--project-soft-bg), transparent 56%),
+    var(--panel-bg);
+  border-color: color-mix(in srgb, var(--project-tab-bg) 34%, var(--border));
+}
+
+.project-color-picker {
+  display: grid;
+  gap: 10px;
+  margin: 0;
+  padding: 12px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+}
+
+.project-color-picker legend {
+  padding: 0 6px;
+  color: var(--muted);
+  font-size: 0.84rem;
+  font-weight: 850;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.project-color-picker__palette {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.project-color-option {
+  position: relative;
+  display: inline-flex !important;
+  width: auto;
+  align-items: center;
+  gap: 8px !important;
+  color: var(--text) !important;
+  font-size: 0.78rem !important;
+  letter-spacing: normal !important;
+  text-transform: none !important;
+  cursor: pointer;
+}
+
+.project-color-option input {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  opacity: 0;
+}
+
+.project-color-option--default span,
+.project-color-option__swatch {
+  display: inline-grid;
+  min-height: 34px;
+  place-items: center;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: var(--field-bg);
+}
+
+.project-color-option--default span {
+  padding: 0 12px;
+}
+
+.project-color-option__swatch {
+  width: 34px;
+  background: var(--project-tab-bg);
+}
+
+.project-color-option input:checked + span,
+.project-color-option input:checked + .project-color-option__swatch {
+  border-color: color-mix(in srgb, var(--blue) 64%, #ffffff 36%);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--blue) 28%, transparent);
+}
+
+.project-color-option--disabled {
+  cursor: not-allowed;
+  opacity: 0.34;
+}
+
+.project-color-option--disabled .project-color-option__swatch {
+  background-image: linear-gradient(135deg, transparent 44%, rgba(255, 255, 255, 0.9) 45%, rgba(255, 255, 255, 0.9) 55%, transparent 56%);
+}
